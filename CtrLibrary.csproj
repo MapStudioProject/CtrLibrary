@@ -6,15 +6,6 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<OutputPath>..\..\CTR Studio\bin\Debug\net6.0\Plugins\</OutputPath>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<OutputPath>..\..\CTR Studio\bin\Release\net6.0\Plugins\</OutputPath>
-	</PropertyGroup>
-
 	<ItemGroup>
 	  <None Remove="Lib\Shaders\TexStageEnv.frag" />
 	  <None Remove="Lib\Shaders\TexStageEnv.vert" />
