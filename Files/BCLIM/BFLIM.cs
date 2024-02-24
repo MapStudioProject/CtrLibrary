@@ -16,29 +16,29 @@ using SPICA.PICA.Commands;
 
 namespace CtrLibrary
 {
-    public class BCLIM : MapStudio.UI.FileEditor, IFileFormat
+    public class BFLIM : MapStudio.UI.FileEditor, IFileFormat
     {
         public bool CanSave { get; set; } = true;
 
-        public string[] Description { get; set; } = new string[] { ".bclim" };
-        public string[] Extension { get; set; } = new string[] { "*.bclim" };
+        public string[] Description { get; set; } = new string[] { ".bflim" };
+        public string[] Extension { get; set; } = new string[] { "*.bflim" };
 
         public File_Info FileInfo { get; set; }
 
         public bool Identify(File_Info fileInfo, Stream stream)
         {
-            if (stream.Length < 0x40 || (!fileInfo.FileName.EndsWith(".bclim")))
+            if (stream.Length < 0x40 || (!fileInfo.FileName.EndsWith(".bflim")))
                 return false;
 
             using (FileReader reader = new FileReader(stream, true)) {
-                return reader.CheckSignature(4, "CLIM", reader.BaseStream.Length - 0x28);
+                return reader.CheckSignature(4, "FLIM", reader.BaseStream.Length - 0x28);
             }
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class FileHeader
         {
-            public Magic magic = "CLIM";
+            public Magic magic = "FLIM";
             public ushort bom = 0xFEFF;
             public ushort headerSize = 0x14;
             public uint version = 0x02020000;
@@ -54,9 +54,10 @@ namespace CtrLibrary
             public uint blockSize = 0x10;
             public short Width;
             public short Height;
-            public byte Format;
-            public byte TransformMode;
             public short Alignment;
+            public byte Format;
+            public byte TileMode;
+
             public int DataSize;
         }
 
@@ -65,15 +66,7 @@ namespace CtrLibrary
 
         private byte[] ImageData;
 
-        public CtrImageBase ImageBase;
-
-        public BCLIM() { }
-
-        public BCLIM(Stream stream)
-        {
-            this.FileInfo = new File_Info() { FileName = "NewBclim" };
-            Load(stream);
-        }
+        private CtrImageBase ImageBase;
 
         public void Load(Stream stream)
         {
@@ -101,7 +94,6 @@ namespace CtrLibrary
             using (var writer = new FileWriter(stream))
             {
                 ImageInfo.DataSize = ImageData.Length;
-                ImageInfo.Alignment = 128;
 
                 writer.SetByteOrder(false);
                 writer.Write(ImageData);
@@ -120,7 +112,7 @@ namespace CtrLibrary
         private void ReloadImage(ImageHeader image)
         {
             var texture = ToH3D();
-            var transformMode = (CTR_3DS.Orientation)ImageInfo.TransformMode;
+            var transformMode = (CTR_3DS.Orientation)ImageInfo.TileMode;
 
             ImageBase = new CtrImageBase(texture, transformMode);
             this.Root.AddChild(ImageBase);
@@ -131,7 +123,7 @@ namespace CtrLibrary
             this.ImageInfo.Width = (short)texture.Width;
             this.ImageInfo.Height = (short)texture.Height;
             this.ImageInfo.Format = FormatList.FirstOrDefault(x => x.Value == texture.Format).Key;
-            this.ImageInfo.TransformMode = (byte)ImageBase.Orientation;
+            this.ImageInfo.TileMode = (byte)ImageBase.Orientation;
 
             this.ImageData = texture.RawBuffer;
         }
@@ -158,11 +150,6 @@ namespace CtrLibrary
             windows.Add(Workspace.Outliner);
             windows.Add(Workspace.PropertyWindow);
             return windows;
-        }
-
-        public override void DrawArchiveFileEditor()
-        {
-            MapStudio.UI.ImageEditor.LoadEditor(ImageBase.Tag as STGenericTexture);
         }
 
 

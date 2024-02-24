@@ -599,6 +599,8 @@ namespace CtrLibrary.Bcres
 
             H3DCamera H3DCamera;
 
+            public CameraHandler CameraDisplay;
+
             public CameraNode(GfxDict<T> subSections, object section) : base(subSections, section)
             {
                 H3DCamera = Camera.ToH3DCamera();
@@ -606,9 +608,16 @@ namespace CtrLibrary.Bcres
                 BchCameraUI camUI = new BchCameraUI();
                 camUI.Init(H3DCamera, Camera.MetaData);
 
+                //Create a camera handle instance for previewing
+                CameraDisplay = new CameraHandler(H3DCamera);
+
                 TagUI.UIDrawer += delegate
                 {
                     camUI.Render();
+                };
+                this.OnSelected += delegate
+                {
+                    CameraDisplay.Activate();
                 };
                 Tag = Camera;
             }

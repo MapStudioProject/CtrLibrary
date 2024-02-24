@@ -6,13 +6,6 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	</PropertyGroup>
-
 	<ItemGroup>
 	  <None Remove="Lib\Shaders\TexStageEnv.frag" />
 	  <None Remove="Lib\Shaders\TexStageEnv.vert" />
@@ -28,7 +21,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	  <PackageReference Include="SharpYaml" Version="2.1.1" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\..\GLFrameworkEngine\GLFrameworkEngine.csproj" />
+	  <ProjectReference Include="..\..\IONET\IONET\IONET.csproj" />
 	  <ProjectReference Include="..\..\MapStudio.UI\MapStudio.UI.csproj" />
 	  <ProjectReference Include="..\..\SPICA\SPICA.Rendering\SPICA.Rendering.csproj" />
 	  <ProjectReference Include="..\..\SPICA\SPICA\SPICA.csproj" />
@@ -36,14 +35,14 @@
 	</ItemGroup>
 
   <ItemGroup>
+    <Reference Include="ByamlExt">
+      <HintPath>Externals\ByamlExt.dll</HintPath>
+    </Reference>
     <Reference Include="ImGui.NET">
       <HintPath>Externals\ImGui.NET.dll</HintPath>
     </Reference>
     <Reference Include="IONET">
       <HintPath>Externals\IONET.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>Externals\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="OpenTK">
       <HintPath>Externals\OpenTK.dll</HintPath>

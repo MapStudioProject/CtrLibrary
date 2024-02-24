@@ -22,6 +22,8 @@ namespace CtrLibrary
     /// </summary>
     public class CtrImageBase : NodeBase
     {
+        public STGenericTexture TextureInstance => (STGenericTexture)this.Tag;
+
         /// <summary>
         /// The model instance of the h3d texture.
         /// </summary>
@@ -52,6 +54,13 @@ namespace CtrLibrary
 
             this.ContextMenus.Add(new MenuItemModel("Export", ExportDialog));
             this.ContextMenus.Add(new MenuItemModel("Replace", ReplaceDialog));
+        }
+
+        public GLTexture GetRenderTexture()
+        {
+            if (TextureInstance.RenderableTex == null)
+                TextureInstance.LoadRenderableTexture();
+            return (GLTexture)TextureInstance.RenderableTex;
         }
 
         void ReplaceDialog()
