@@ -227,9 +227,16 @@ namespace CtrLibrary.Bch
             AddNodeGroup(H3DData.CameraAnimations, H3DGroupType.CameraAnim);
             AddNodeGroup(H3DData.LightAnimations, H3DGroupType.LightAnim);
             AddNodeGroup(H3DData.FogAnimations, H3DGroupType.FogAnim);
+
+            FrameCamera();
+
+            Root.OnSelected += delegate
+            {
+                FrameCamera();
+            };
         }
 
-     /*   public void FrameCamera()
+        private void FrameCamera()
         {
             if (Render.Renderer.Models.Count == 0)
                 return;
@@ -251,7 +258,7 @@ namespace CtrLibrary.Bch
             GLContext.ActiveContext.Camera.RotationZ = 0;
 
             GLContext.ActiveContext.Camera.UpdateMatrices();
-        }*/
+        }
 
 
         /// <summary>

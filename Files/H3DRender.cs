@@ -17,13 +17,16 @@ using SPICA.Formats.CtrH3D.LUT ;
 using SPICA.PICA.Shader;
 using Newtonsoft.Json;
 using CtrLibrary.UI;
+using OpenTK;
+using GLFrameworkEngine.Utils;
+using SPICA.Formats.ModelBinary;
 
 namespace CtrLibrary.Rendering
 {
     /// <summary>
     /// Represents a render instance for H3D data used for rendering PICA 3DS data.
     /// </summary>
-    public class H3DRender : EditableObject
+    public class H3DRender : EditableObject, IColorPickable, IFrustumCulling
     {
         /// <summary>
         /// The texture cache of globally loaded textures. This cache is only used for UI purposes to get the H3D instances for viewing.
@@ -48,12 +51,71 @@ namespace CtrLibrary.Rendering
         /// </summary>
         public List<SkeletonRenderer> Skeletons = new List<SkeletonRenderer>();
 
+        public bool EnableFrustumCulling => true;
+
+        public bool InFrustum { get; set; } = true;
+
+        private Vector3 Min;
+        private Vector3 Max;
+
         public H3DRender(Stream stream, NodeBase parent) : base(parent) {
             Load(Gfx.Open(stream).ToH3D());
         }
 
         public H3DRender(H3D h3d, NodeBase parent) : base(parent) {
             Load(h3d);
+        }
+
+        public H3DRender(H3DRender cached, NodeBase parent) : base(parent)
+        {
+            Renderer = new Renderer(1, 1);
+            Renderer.LoadCached(cached.Renderer);
+         /*   Renderer.Lights.Add(new Light()
+            {
+                Ambient = new Color4(0.1f, 0.1f, 0.1f, 1.0f),
+                Diffuse = new Color4(0.4f, 0.4f, 0.4f, 1.0f),
+                Specular0 = new Color4(0.3f, 0.3f, 0.3f, 1.0f),
+                Specular1 = new Color4(0.4f, 0.4f, 0.4f, 1.0f),
+                TwoSidedDiffuse = true,
+                Position = new OpenTK.Vector3(0, 0, 0),
+                Enabled = true,
+                Type = LightType.PerFragment,
+            });*/
+
+            Renderer.Lights.Add(new Light()
+            {
+                Ambient = new Color4(0.1f, 0.1f, 0.1f, 1.0f),
+                Diffuse = new Color4(1, 1, 1, 1.0f),
+                Specular0 = new Color4(0.3f, 0.3f, 0.3f, 1.0f),
+                Specular1 = new Color4(0.4f, 0.4f, 0.4f, 1.0f),
+                TwoSidedDiffuse = true,
+                Position = new OpenTK.Vector3(0, 0, 0),
+                Enabled = true,
+                Type = LightType.PerFragment,
+            });
+
+            //Caches are used to search up globally loaded data within the UI and renders
+            //So a file can access the data externally from other files
+            LUTCacheManager.Setup();
+            LUTCacheManager.Load(Renderer);
+
+            BoundingSphere = cached.BoundingSphere;
+
+            bounding = new BoundingNode(cached.Min, cached.Max);
+            bounding.UpdateTransform(this.Transform.TransformMatrix);
+            this.Transform.TransformUpdated += delegate
+            {
+                bounding.UpdateTransform(this.Transform.TransformMatrix);
+            };
+        }
+
+        private BoundingNode bounding = new BoundingNode();
+
+        public override BoundingNode BoundingNode => bounding;
+
+        public bool IsInsideFrustum(GLContext context)
+        {
+            return context.Camera.InFustrum(this.BoundingNode);
         }
 
         public static H3DModel GetFirstVisibleModel()
@@ -139,13 +201,15 @@ namespace CtrLibrary.Rendering
             {
                 Renderer.Lights.Add(new Light()
                 {
-                    Ambient = new Color4(0.1f, 0.1f, 0.1f, 1.0f),
-                    Diffuse = new Color4(0.4f, 0.4f, 0.4f, 1.0f),
-                    Specular0 = new Color4(0.3f, 0.3f, 0.3f, 1.0f),
-                    Specular1 = new Color4(0.4f, 0.4f, 0.4f, 1.0f),
-                    TwoSidedDiffuse = true,
-                    Position = new OpenTK.Vector3(0, 0, 0),
+                    Ambient = new Color4(0.5f, 0.45f, 0.56f, 1.0f),
+                    Diffuse = new Color4(0.35f, 0.35f, 0.35f, 1.0f),
+                    Specular0 = new Color4(0.7f, 0.7f, 0.7f, 1.0f),
+                    Specular1 = new Color4(0.3f, 0.3f, 0.3f, 1.0f),
+                    TwoSidedDiffuse = false,
+                    Position = new OpenTK.Vector3(10000, 10000, 10000),
+                    Direction = new Vector3(-0.286f, -0.953f, -0.095f),
                     Enabled = true,
+                    Directional = true,
                     Type = LightType.PerFragment,
                 });
             }
@@ -164,6 +228,50 @@ namespace CtrLibrary.Rendering
             //So a file can access the data externally from other files
             LUTCacheManager.Setup();
             LUTCacheManager.Load(Renderer);
+
+
+            Vector3 min = new Vector3(float.MaxValue);
+            Vector3 max = new Vector3(float.MinValue);
+
+            List<Vector3> positions = new List<Vector3>();
+            foreach (var model in h3d.Models)
+            {
+                foreach (var mesh in model.Meshes)
+                {
+                    foreach (var vert in mesh.GetVertices())
+                    {
+                        var p = new System.Numerics.Vector3(vert.Position.X, vert.Position.Y, vert.Position.Z);
+                        if (model.Skeleton.Count > 0)
+                        {
+                            var index = vert.Indices.b0;
+                            if (index != -1)
+                                p = System.Numerics.Vector3.Transform(p, model.Skeleton[index].GetWorldTransform(model.Skeleton));
+                        }
+
+                        positions.Add(new Vector3(p.X, p.Y, p.Z));
+
+                        min.X = MathF.Min(p.X, min.X);
+                        min.Y = MathF.Min(p.Y, min.Y);
+                        min.Z = MathF.Min(p.Z, min.Z);
+                        max.X = MathF.Max(p.X, max.X);
+                        max.Y = MathF.Max(p.Y, max.Y);
+                        max.Z = MathF.Max(p.Z, max.Z);
+                    }
+                }
+            }
+
+            Min = min;
+            Max = max;
+
+            bounding = new BoundingNode(min, max);
+            BoundingSphere = BoundingSphereGenerator.GenerateBoundingSphere(positions);
+            bounding.UpdateTransform(this.Transform.TransformMatrix);
+            this.Transform.TransformUpdated += delegate
+            {
+                bounding.UpdateTransform(this.Transform.TransformMatrix);
+            };
+
+            CanSelect = false;
         }
 
         public override void Dispose()
@@ -182,6 +290,19 @@ namespace CtrLibrary.Rendering
             RenderCache.Remove(this.Renderer);
 
             H3DRenderCache.Remove(this);
+        }
+
+        public void DrawColorPicking(GLContext context)
+        {
+            if (!CanSelect || !InFrustum) return;
+
+            var color = context.ColorPicker.SetPickingColor(this);
+
+            foreach (var model in Renderer.Models)
+            {
+                model.Transform = this.Transform.TransformMatrix;
+                model.RenderMeshesPicking(color);
+            }
         }
 
         public override void DrawModel(GLContext context, Pass pass)
@@ -227,34 +348,41 @@ namespace CtrLibrary.Rendering
                 model.Transform = this.Transform.TransformMatrix;
 
             //Draw the models
-            Renderer.Render();
+            if (InFrustum)
+                Renderer.Render(this.IsSelected);
 
             //bounding box debugging
-        /*    foreach (var model in Scene.Models)
-            {
-                foreach (var mesh in model.Meshes)
+
+          //  StandardMaterial mat = new StandardMaterial();
+           // mat.Render(context);
+
+         //   BoundingBoxRender.Draw(context, bounding.Box);
+
+            /*    foreach (var model in Scene.Models)
                 {
-                    if (!mesh.IsSelected)
-                        continue;
-
-                    foreach (var usd in mesh.MetaData)
+                    foreach (var mesh in model.Meshes)
                     {
-                        if (usd.Type == H3DMetaDataType.BoundingBox)
+                        if (!mesh.IsSelected)
+                            continue;
+
+                        foreach (var usd in mesh.MetaData)
                         {
-                            var v = (H3DBoundingBox)usd.Values[0];
-                            var min = v.Center - v.Size;
-                            var max = v.Center + v.Size;
+                            if (usd.Type == H3DMetaDataType.BoundingBox)
+                            {
+                                var v = (H3DBoundingBox)usd.Values[0];
+                                var min = v.Center - v.Size;
+                                var max = v.Center + v.Size;
 
-                            StandardMaterial mat = new StandardMaterial();
-                            mat.Render(GLContext.ActiveContext);
+                                StandardMaterial mat = new StandardMaterial();
+                                mat.Render(GLContext.ActiveContext);
 
-                            BoundingBoxRender.Draw(GLContext.ActiveContext,
-                                new OpenTK.Vector3(min.X, min.Y, min.Z),
-                                new OpenTK.Vector3(max.X, max.Y, max.Z));
+                                BoundingBoxRender.Draw(GLContext.ActiveContext,
+                                    new OpenTK.Vector3(min.X, min.Y, min.Z),
+                                    new OpenTK.Vector3(max.X, max.Y, max.Z));
+                            }
                         }
                     }
-                }
-            }*/
+                }*/
 
             //Draw the skeleton
             foreach (var skeleton in Skeletons)
@@ -267,7 +395,7 @@ namespace CtrLibrary.Rendering
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Back);
             GL.Disable(EnableCap.StencilTest);
-
+            GL.Disable(EnableCap.Blend);
         }
 
         private void PrepareDebugShading()

@@ -29,8 +29,8 @@ namespace FirstPlugin
 
         private List<FileEntry> files = new List<FileEntry>();
 
-        private ushort Bom;
-        private uint Version;
+        private ushort Bom = 0xFFFE;
+        private uint Version = 0x1000000;
 
         public bool AddFile(ArchiveFileInfo archiveFileInfo)
         {
@@ -91,12 +91,16 @@ namespace FirstPlugin
                 List<NodeEntry> entries = new List<NodeEntry>();
                 reader.SeekBegin(FileTableOffset);
                 entries.Add(new NodeEntry(reader));
+
+                //Read nodes
                 for (int i = 0; i < entries[0].Size - 1; i++)
                     entries.Add(new NodeEntry(reader));
 
+                //Read names
                 for (int i = 0; i < entries.Count; i++)
                     entries[i].Name = ReadCStringW(reader);
 
+                //Prepare file paths
                 for (int i = 0; i < entries.Count; i++)
                 {
                     string Name = entries[i].Name;
@@ -109,6 +113,7 @@ namespace FirstPlugin
                         entries[i].FullName += Name;
                 }
 
+                //Add files
                 for (int i = 0; i < entries.Count; i++)
                 {
                     if (!entries[i].IsFolder)
@@ -129,7 +134,11 @@ namespace FirstPlugin
         {
             using (FileWriter writer = new FileWriter(stream))
             {
-                
+                writer.WriteSignature("darc");
+                writer.Write(this.Bom);
+                writer.SetByteOrder(this.Bom == 0xFEFF);
+                writer.Write((ushort)0x1C); //header size
+
             }
         }
 

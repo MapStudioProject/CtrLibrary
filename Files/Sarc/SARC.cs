@@ -18,6 +18,9 @@ namespace CtrLibrary
 
         public File_Info FileInfo { get; set; }
 
+        public const int SarcPluginPriority = 0;
+        public int Priority { get { return SarcPluginPriority; } }
+
         public bool CanAddFiles { get; set; } = true;
         public bool CanRenameFiles { get; set; } = true;
         public bool CanReplaceFiles { get; set; } = true;
@@ -45,6 +48,23 @@ namespace CtrLibrary
                 endianness = Syroot.BinaryData.ByteOrder.LittleEndian,
                 Files = new Dictionary<string, byte[]>(),
             };
+        }
+
+        public SARC(SarcData sarcData)
+        {
+            SarcData = sarcData;
+            foreach (var file in SarcData.Files)
+            {
+                var fileEntry = new FileEntry();
+                fileEntry.FileName = file.Key;
+                if (SarcData.HashOnly)
+                {
+                    fileEntry.FileName = SARC_Parser.TryGetNameFromHashTable(file.Key);
+                    fileEntry.HashName = file.Key;
+                }
+                fileEntry.SetData(file.Value);
+                files.Add(fileEntry);
+            }
         }
 
         public static byte[] GetFile(string sarcPath, string file)
