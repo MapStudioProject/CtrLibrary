@@ -855,7 +855,7 @@ namespace CtrLibrary.Bcres
             //Vertex colors
             if (settings.ImportVertexColors && mesh.HasColorSet(0))
             {
-                bool is_colors_fixed = mesh.Vertices.Select(x => x.Colors[0]).Distinct().ToList().Count >= 1;
+                bool is_colors_fixed = mesh.Vertices.Select(x => x.Colors[0]).Distinct().ToList().Count <= 1;
                 if (!is_colors_fixed)
                 {
                     var colorFormat = FormatList[settings.Colors.Format];
