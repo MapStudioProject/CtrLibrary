@@ -392,6 +392,26 @@ namespace CtrLibrary.Bcres
             //Calculate bounding box
             CalculateBounding(ref gfxShape, iomesh);
 
+            //Create a default normal set if one is not present
+            if (!vertexBuffer.Attributes.Any(x => x.AttrName == PICAAttributeName.Normal))
+            {
+                //Constant normal if not present
+                float[] normal = new float[3] { 1, 0, 0 };
+
+                var normals = iomesh.Vertices.Select(x => x.Normal).Distinct().ToList();
+                if (normals.Count > 0)
+                    normal = new float[3] { normals[0].X, normals[0].Y, normals[0].Z };
+
+                gfxShape.VertexBuffers.Add(new GfxVertexBufferFixed()
+                {
+                    AttrName = PICAAttributeName.Normal,
+                    Elements = 3,
+                    Format = GfxGLDataType.GL_FLOAT,
+                    Scale = 1.0f,
+                    Type = GfxVertexBufferType.Fixed,
+                    Vector = normal
+                });
+            }
             //Create a default color set if one is not present
             if (settings.ImportVertexColors && !vertexBuffer.Attributes.Any(x => x.AttrName == PICAAttributeName.Color))
             {
