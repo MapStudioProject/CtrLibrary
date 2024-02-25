@@ -9,6 +9,7 @@ using MapStudio.UI;
 using System.Numerics;
 using Newtonsoft.Json;
 using SPICA.PICA.Commands;
+using CtrLibrary.Bcres;
 
 namespace CtrLibrary
 {
@@ -368,6 +369,9 @@ namespace CtrLibrary
         /// The preset file to assign to all materials (if not using original material setting)
         /// </summary>
         public string MaterialPresetFile = "";
+
+        [JsonIgnore]
+        public CDAB DivFile = new CDAB();
 
         //Attribute settings
         public AttributeSetting Position = new AttributeSetting(PICAAttributeFormat.Float, 1.0f);

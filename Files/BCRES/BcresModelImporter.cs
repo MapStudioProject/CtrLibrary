@@ -31,6 +31,9 @@ namespace CtrLibrary.Bcres
                 WeightNormalize = true,
                 GenerateTangentsAndBinormals = settings.ImportTangents,
             });
+
+            settings.DivFile.Shapes.Clear();
+
             var model = scene.Models[0];
             var bones = model.Skeleton.BreathFirstOrder();
             //Import textures into file/gui
