@@ -392,6 +392,18 @@ namespace CtrLibrary.Bcres
             //Create a default color set if one is not present
             if (settings.ImportVertexColors && !vertexBuffer.Attributes.Any(x => x.AttrName == PICAAttributeName.Color))
             {
+                //Use either fixed color or white
+                float[] color = new float[4] { 1, 1, 1, 1 };
+                if (iomesh.HasColorSet(0))
+                {
+                    var colors = iomesh.Vertices.Select(x => x.Colors[0]).Distinct().ToList();
+                    color = new float[]
+                    {
+                        colors[0].X, colors[0].Y,
+                        colors[0].Z, colors[0].W,
+                    };
+                }
+
                 gfxShape.VertexBuffers.Add(new GfxVertexBufferFixed()
                 {
                     AttrName = PICAAttributeName.Color,
@@ -399,7 +411,7 @@ namespace CtrLibrary.Bcres
                     Format = GfxGLDataType.GL_FLOAT,
                     Scale = 1.0f,
                     Type = GfxVertexBufferType.Fixed,
-                    Vector = new float[4] { 1, 1, 1, 1 }
+                    Vector = color
                 });
             }
             gfxModel.Meshes.Add(gfxMesh);
@@ -812,8 +824,11 @@ namespace CtrLibrary.Bcres
                 AttrName = PICAAttributeName.Position,
                 Scale = settings.Position.Scale,
             });
+
+            bool is_normals_fixed = mesh.Vertices.Select(x => x.Normal).Distinct().ToList().Count >= 1;
+
             //Vertex normals
-            if (mesh.HasNormals)
+            if (mesh.HasNormals && !is_normals_fixed)
             {
                 attributes.Add(new GfxAttribute()
                 {
@@ -840,17 +855,21 @@ namespace CtrLibrary.Bcres
             //Vertex colors
             if (settings.ImportVertexColors && mesh.HasColorSet(0))
             {
-                var colorFormat = FormatList[settings.Colors.Format];
-                if (colorFormat == GfxGLDataType.GL_BYTE)
-                    colorFormat = GfxGLDataType.GL_UNSIGNED_BYTE;
-
-                attributes.Add(new GfxAttribute()
+                bool is_colors_fixed = mesh.Vertices.Select(x => x.Colors[0]).Distinct().ToList().Count >= 1;
+                if (!is_colors_fixed)
                 {
-                    Elements = 4,
-                    Format = colorFormat,
-                    AttrName = PICAAttributeName.Color,
-                    Scale = settings.Colors.Scale,
-                });
+                    var colorFormat = FormatList[settings.Colors.Format];
+                    if (colorFormat == GfxGLDataType.GL_BYTE)
+                        colorFormat = GfxGLDataType.GL_UNSIGNED_BYTE;
+
+                    attributes.Add(new GfxAttribute()
+                    {
+                        Elements = 4,
+                        Format = colorFormat,
+                        AttrName = PICAAttributeName.Color,
+                        Scale = settings.Colors.Scale,
+                    });
+                }
             }
             //Use bone indices for rigging
             if (mesh.HasEnvelopes() && skinningCount > 0)
