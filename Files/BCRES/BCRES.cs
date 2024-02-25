@@ -77,6 +77,8 @@ namespace CtrLibrary.Bcres
             }
         }
 
+        public BCRES() { FileInfo = new File_Info(); }
+
         /// <summary>
         /// Creates a new bcres instance for the new file menu UI.
         /// Returns false if not supported.
