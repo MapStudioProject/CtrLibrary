@@ -692,6 +692,7 @@ namespace CtrLibrary.Bcres
                 //Add face desc for divided indices
                 face.FaceDescriptors.Add(new GfxFaceDescriptor()
                 {
+                    BoundingVolume = 4,
                     PrimitiveMode = PICAPrimitiveMode.Triangles,
                     Indices = faces.ToArray(),
                     Format = is16Bit ? GfxGLDataType.GL_UNSIGNED_SHORT : GfxGLDataType.GL_UNSIGNED_BYTE,
