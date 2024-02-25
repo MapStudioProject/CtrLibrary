@@ -517,7 +517,7 @@ namespace CtrLibrary.Bcres
 
             if (settings.DivideMK7)
             {
-                return SplitByDiv(mesh, poly);
+                return SplitByDiv(mesh, poly, settings);
             }
 
             //Split the mesh into sub meshes based on the max amount of bones used
@@ -638,7 +638,7 @@ namespace CtrLibrary.Bcres
         }
 
         //Splits sub meshes by .div
-        static List<GfxSubMesh> SplitByDiv(IOMesh mesh, IOPolygon poly)
+        static List<GfxSubMesh> SplitByDiv(IOMesh mesh, IOPolygon poly, CtrImportSettings settings)
         {
             //Sub meshes
             List<GfxSubMesh> subMeshes = new List<GfxSubMesh>();
@@ -651,9 +651,7 @@ namespace CtrLibrary.Bcres
             subMesh.Faces.Add(face);
 
             //Clip data (.div file)
-            var clipData = CDAB.Instance;
-
-            clipData.Shapes.Clear();
+            var clipData = settings.DivFile;
             clipData.Shapes.Add(new CDAB.Shape());
 
             //Stream per mesh

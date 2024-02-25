@@ -337,6 +337,7 @@ namespace CtrLibrary.Bcres
             dlg.SaveDialog = false;
             dlg.FileName = $"{Header}";
             dlg.AddFilter(".dae", "dae");
+            dlg.AddFilter(".glb", "glb");
             dlg.AddFilter(".fbx", "fbx");
             dlg.AddFilter(".smd", "smd");
             if (dlg.ShowDialog())
@@ -344,6 +345,7 @@ namespace CtrLibrary.Bcres
                 if (dlg.FilePath.ToLower().EndsWith(".dae") || 
                     dlg.FilePath.ToLower().EndsWith(".fbx") ||
                     dlg.FilePath.ToLower().EndsWith(".smd") ||
+                    dlg.FilePath.ToLower().EndsWith(".glb") ||
                     dlg.FilePath.ToLower().EndsWith(".obj"))
                 {
                     CtrModelImportUI importerUI = new CtrModelImportUI();
@@ -430,7 +432,7 @@ namespace CtrLibrary.Bcres
                 dlg.AddFilter(".div", "Divide File");
                 if (dlg.ShowDialog())
                 {
-                    CDAB.Instance.Save(dlg.FilePath);
+                    settings.DivFile.Save(dlg.FilePath);
                 }
             }
         }

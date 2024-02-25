@@ -96,7 +96,7 @@ namespace CtrLibrary
                     Settings.Position = new AttributeSetting(PICAAttributeFormat.Float, 1.0f);
                     Settings.Normal = new AttributeSetting(PICAAttributeFormat.Float, 1.0f);
                     Settings.TexCoord = new AttributeSetting(PICAAttributeFormat.Float, 1.0f);
-                    Settings.BoneIndices = new AttributeSetting(PICAAttributeFormat.Short, 1.0f);
+                    Settings.BoneIndices = new AttributeSetting(PICAAttributeFormat.Byte, 1.0f);
                     Settings.Colors = new AttributeSetting(PICAAttributeFormat.Byte, 1.0f / 255f);
                     Settings.BoneWeights = new AttributeSetting(PICAAttributeFormat.Float, 1.0f);
                     Settings.Tangents = new AttributeSetting(PICAAttributeFormat.Float, 1.0f);

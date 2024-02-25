@@ -15,11 +15,6 @@ namespace CtrLibrary.Bcres
     public class CDAB
     {
         /// <summary>
-        /// The instance of the clip file.
-        /// </summary>
-        public static CDAB Instance = new CDAB();
-
-        /// <summary>
         /// The list of shapes. Tyically this is always one.
         /// </summary>
         public List<Shape> Shapes = new List<Shape>();
