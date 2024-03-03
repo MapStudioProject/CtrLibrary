@@ -847,10 +847,8 @@ namespace CtrLibrary.Bcres
                 Scale = settings.Position.Scale,
             });
 
-            bool is_normals_fixed = mesh.Vertices.Select(x => x.Normal).Distinct().ToList().Count >= 1;
-
             //Vertex normals
-            if (mesh.HasNormals && !is_normals_fixed)
+            if (mesh.HasNormals)
             {
                 attributes.Add(new GfxAttribute()
                 {
