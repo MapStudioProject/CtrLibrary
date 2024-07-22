@@ -591,7 +591,7 @@ namespace CtrLibrary.Bch
         {
             public override string DefaultExtension => ".json";
             public override string[] ExportFilters => new string[] { ".bch", ".json", ".anim" };
-            public override string[] ReplaceFilters => new string[] { ".bch", ".json", ".gltf", ".glb", ".dae", ".anim" };
+            public override string[] ReplaceFilters => new string[] { ".bch", ".json", ".gltf", ".glb", ".dae", ".anim", ".smd" };
 
             public AnimationNode(H3DDict<T> subSections, object section) : base(subSections, section)
             {
@@ -639,6 +639,7 @@ namespace CtrLibrary.Bch
                     case ".dae":
                     case ".glb":
                     case ".gltf":
+                    case ".smd":
                         BchSkelAnimationImporter.Export(((H3DAnimation)Section), GetModel(), filePath);
                         break;
                     default:
@@ -662,6 +663,7 @@ namespace CtrLibrary.Bch
                     case ".dae":
                     case ".glb":
                     case ".gltf":
+                    case ".smd":
                         BchSkelAnimationImporter.Import(filePath, ((H3DAnimation)Section), GetModel());
                         ReloadName();
                         break;

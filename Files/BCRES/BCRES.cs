@@ -740,6 +740,9 @@ namespace CtrLibrary.Bcres
                 if (((GfxAnimation)Section).TargetAnimGroupName == "SkeletalAnimation")
                 {
                     dlg.AddFilter(".anim", "anim");
+                    dlg.AddFilter(".smd", "smd");
+                    dlg.AddFilter(".dae", "dae");
+                    dlg.AddFilter(".gltf", "gltf");
                     dlg.FileName = $"{Header}.anim";
                 }
 
@@ -761,6 +764,7 @@ namespace CtrLibrary.Bcres
                         case ".dae":
                         case ".glb":
                         case ".gltf":
+                        case ".smd":
                             BcresSkelAnimationImporter.Export(((GfxAnimation)Section), GetModel(), dlg.FilePath);
                             break;
                         default:
@@ -788,6 +792,7 @@ namespace CtrLibrary.Bcres
                     dlg.AddFilter(".gltf", "gltf");
                     dlg.AddFilter(".glb", "glb");
                     dlg.AddFilter(".dae", "dae");
+                    dlg.AddFilter(".smd", "smd");
 
                     dlg.FileName = $"{Header}.anim";
                 }
@@ -810,6 +815,7 @@ namespace CtrLibrary.Bcres
                         case ".dae":
                         case ".glb":
                         case ".gltf":
+                        case ".smd":
                             BcresSkelAnimationImporter.Import(dlg.FilePath, ((GfxAnimation)Section), GetModel());
                             break;
                         default:
