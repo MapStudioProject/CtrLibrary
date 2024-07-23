@@ -243,6 +243,9 @@ namespace CtrLibrary
                     for (int i = 0; i < transform.Rotations.Count; i++)
                     {
                         var rot = ToEuler(transform.Rotations[i]);
+                        if (float.IsNaN(rot.X)) rot.X = 0;
+                        if (float.IsNaN(rot.Y)) rot.Y = 0;
+                        if (float.IsNaN(rot.Z)) rot.Z = 0;
 
                         x.KeyFrames.Add(new IOKeyFrame() { Frame = i, Value = rot.X });
                         y.KeyFrames.Add(new IOKeyFrame() { Frame = i, Value = rot.Y });

@@ -837,6 +837,7 @@ namespace CtrLibrary.Bcres
                 dlg.AddFilter(".gltf", "gltf");
                 dlg.AddFilter(".glb", "glb");
                 dlg.AddFilter(".dae", "dae");
+                dlg.AddFilter(".smd", "smd");
                 dlg.FileName = $"{Header}.anim";
 
                 if (dlg.ShowDialog())
