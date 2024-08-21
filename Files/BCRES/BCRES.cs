@@ -50,6 +50,12 @@ namespace CtrLibrary.Bcres
 
     public class BCRES : FileEditor, IFileFormat, IDisposable
     {
+        public class GloDat
+        {
+            public static string replaceInput = null;
+            public static string replaceType = null;
+        }
+
         /// <summary>
         /// The description of the file extension of the plugin.
         /// </summary>
@@ -72,7 +78,8 @@ namespace CtrLibrary.Bcres
 
         public bool Identify(File_Info fileInfo, Stream stream)
         {
-            using (var reader = new FileReader(stream, true)) {
+            using (var reader = new FileReader(stream, true))
+            {
                 return reader.CheckSignature(4, "CGFX");
             }
         }
@@ -158,7 +165,7 @@ namespace CtrLibrary.Bcres
             };
 
             var light = Render.Renderer.Lights[0];
-           // AddRender(new SceneLightingUI.LightPreview(light));
+            // AddRender(new SceneLightingUI.LightPreview(light));
 
             foreach (var lightNode in SceneLightingUI.Setup(Render, Render.Renderer.Lights))
             {
@@ -238,7 +245,7 @@ namespace CtrLibrary.Bcres
             }
             foreach (var lut in LUTFolder.SectionList)
                 BcresData.LUTs.Add(SPICA.Formats.CtrGfx.LUT.GfxLUT.FromH3D(lut));
-            
+
             foreach (var folder in this.Root.Children)
             {
                 if (folder is H3DGroupNode<GfxAnimation>)
@@ -362,12 +369,17 @@ namespace CtrLibrary.Bcres
                 Type = type;
                 Header = GetName();
                 this.ContextMenus.Add(new MenuItemModel("Add", Add));
+                //this.ContextMenus.Add(new MenuItemModel(""));
+                //this.ContextMenus.Add(new MenuItemModel("Import", Import)); // asks for an impossible file far as i can tell
                 this.ContextMenus.Add(new MenuItemModel(""));
-                this.ContextMenus.Add(new MenuItemModel("Import", Import));
+                this.ContextMenus.Add(new MenuItemModel("Export All (.json)", ExportAll));
+                this.ContextMenus.Add(new MenuItemModel("Replace All (.json)", ReplaceAllJson));
                 this.ContextMenus.Add(new MenuItemModel(""));
-                this.ContextMenus.Add(new MenuItemModel("Export All", ExportAll));
-                this.ContextMenus.Add(new MenuItemModel("Replace All", ReplaceAll));
-                this.ContextMenus.Add(new MenuItemModel(""));
+                if (type == H3DGroupType.SkeletalAnim)
+                {
+                    this.ContextMenus.Add(new MenuItemModel("Replace All (.anim all types)\nReg = .anim, Baked Quat = .q.anim, Baked Mat = .m.anim", ReplaceAllAnim));
+                    this.ContextMenus.Add(new MenuItemModel(""));
+                }
                 this.ContextMenus.Add(new MenuItemModel("Clear", Clear));
             }
 
@@ -412,10 +424,79 @@ namespace CtrLibrary.Bcres
                         node.ExportAsJson(Path.Combine(dlg.SelectedPath, $"{node.Header}.json"));
                 }
             }
-
+            public static string GetFullExtension(string fileName)
+            {
+                int lastDotIndex = fileName.LastIndexOf('.');
+                if (lastDotIndex == -1)
+                {
+                    return string.Empty;
+                }
+                string beforeLastDot = fileName.Substring(0, lastDotIndex);
+                string extensionFromLastDot = fileName.Substring(lastDotIndex);
+                if (extensionFromLastDot == ".anim")
+                {
+                    int secondLastDotIndex = beforeLastDot.LastIndexOf('.');
+                    if (secondLastDotIndex != -1)
+                    {
+                        string potentialExtension = beforeLastDot.Substring(secondLastDotIndex);
+                        if (potentialExtension == ".q" || potentialExtension == ".m")
+                        {
+                            return potentialExtension + extensionFromLastDot;
+                        }
+                    }
+                }
+                return extensionFromLastDot;
+            }
+            private void ReplaceAllJson()
+            {
+                GloDat.replaceType = "Json";
+                ReplaceAll();
+                GloDat.replaceType = null;
+            }
+            private void ReplaceAllAnim()
+            {
+                GloDat.replaceType = "Anim";
+                ReplaceAll();
+                GloDat.replaceType = null;
+            }
             private void ReplaceAll()
             {
-
+                ImguiFolderDialog dlg = new ImguiFolderDialog();
+                if (dlg.ShowDialog())
+                {
+                    foreach (var file in Directory.GetFiles(dlg.SelectedPath))
+                    {
+                        string ext = GetFullExtension(file);
+                        if ((GloDat.replaceType == "Json" && ext == ".json") || (GloDat.replaceType == "Anim" && (ext == ".anim" || ext == ".q.anim" || ext == ".m.anim")))
+                        {
+                            foreach (NodeSection<T> node in this.Children)
+                            {
+                                string fileNameNoExt = Path.GetFileName(file).Replace(GetFullExtension(file), "");
+                                if (node.Header == fileNameNoExt)
+                                {
+                                    GloDat.replaceInput = file;
+                                    if (ext == ".q.anim")
+                                    {
+                                        Console.WriteLine($"Replaced {Path.GetFileName(file)} (Baked Quaternions)");
+                                        node.ReplaceAsBaked(false);
+                                    }
+                                    else if (ext == ".m.anim")
+                                    {
+                                        Console.WriteLine($"Replaced {Path.GetFileName(file)} (Baked Matrices)");
+                                        node.ReplaceAsBaked(true);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine($"Replaced {Path.GetFileName(file)}");
+                                        node.Replace();
+                                    }
+                                }
+                                GloDat.replaceInput = null;
+                            }
+                        }
+                    }
+                    Console.WriteLine();
+                }
             }
 
             private void Clear()
@@ -780,30 +861,51 @@ namespace CtrLibrary.Bcres
 
             public override void Replace()
             {
-                ImguiFileDialog dlg = new ImguiFileDialog();
-                dlg.SaveDialog = false;
-                dlg.FileName = $"{Header}.json";
-                dlg.AddFilter(".json", "json");
-                dlg.AddFilter(".bcres", "bcres");
-
-                if (((GfxAnimation)Section).TargetAnimGroupName == "SkeletalAnimation")
+                bool doReplace = false;
+                ImguiFileDialog dlg = null;
+                if (GloDat.replaceInput == null)
                 {
-                    dlg.AddFilter(".anim", "anim");
-                    dlg.AddFilter(".gltf", "gltf");
-                    dlg.AddFilter(".glb", "glb");
-                    dlg.AddFilter(".dae", "dae");
-                    dlg.AddFilter(".smd", "smd");
+                    dlg = new ImguiFileDialog();
+                    dlg.SaveDialog = false;
+                    dlg.FileName = $"{Header}.json";
+                    dlg.AddFilter(".json", "json");
+                    dlg.AddFilter(".bcres", "bcres");
 
-                    dlg.FileName = $"{Header}.anim";
+                    if (((GfxAnimation)Section).TargetAnimGroupName == "SkeletalAnimation")
+                    {
+                        dlg.AddFilter(".anim", "anim");
+                        dlg.AddFilter(".gltf", "gltf");
+                        dlg.AddFilter(".glb", "glb");
+                        dlg.AddFilter(".dae", "dae");
+                        dlg.AddFilter(".smd", "smd");
+                        dlg.FileName = $"{Header}.anim";
+                    }
+                    if (dlg.ShowDialog())
+                    {
+                        doReplace = true;
+                    }
                 }
-
-                if (dlg.ShowDialog())
+                if (GloDat.replaceInput != null)
                 {
-                    string ext = Path.GetExtension(dlg.FilePath.ToLower());
+                    doReplace = true;
+                }
+                if (doReplace)
+                {
+                    string ext = ".json";
+                    if (GloDat.replaceType == "Anim")
+                    {
+                        ext = ".anim";
+                    }
+                    string filepath = GloDat.replaceInput;
+                    if (GloDat.replaceInput == null)
+                    {
+                        filepath = dlg.FilePath;
+                        ext = Path.GetExtension(dlg.FilePath.ToLower());
+                    }
                     switch (ext)
                     {
                         case ".json":
-                            Section = JsonConvert.DeserializeObject<T>(File.ReadAllText(dlg.FilePath));
+                            Section = JsonConvert.DeserializeObject<T>(File.ReadAllText(filepath));
                             Dict[this.Header] = (T)Section;
                             Dict[this.Header].Name = this.Header;
                             break;
@@ -816,7 +918,18 @@ namespace CtrLibrary.Bcres
                         case ".glb":
                         case ".gltf":
                         case ".smd":
-                            BcresSkelAnimationImporter.Import(dlg.FilePath, ((GfxAnimation)Section), GetModel());
+
+                            var originalConsoleOut = Console.Out;
+                            Console.SetOut(TextWriter.Null);
+                            try
+                            {
+                                BcresSkelAnimationImporter.Import(filepath, ((GfxAnimation)Section), GetModel());
+                            }
+                            finally
+                            {
+                                // Restore the original Console.Out
+                                Console.SetOut(originalConsoleOut);
+                            }
                             break;
                         default:
                             throw new Exception($"Unsupported file extension {ext}!");
@@ -829,25 +942,53 @@ namespace CtrLibrary.Bcres
                 }
             }
 
-            public void ReplaceAsBaked(bool asMatrices)
+            public override void ReplaceAsBaked(bool asMatrices)
             {
-                ImguiFileDialog dlg = new ImguiFileDialog();
-                dlg.SaveDialog = false;
-                dlg.AddFilter(".anim", "anim");
-                dlg.AddFilter(".gltf", "gltf");
-                dlg.AddFilter(".glb", "glb");
-                dlg.AddFilter(".dae", "dae");
-                dlg.AddFilter(".smd", "smd");
-                dlg.FileName = $"{Header}.anim";
-
-                if (dlg.ShowDialog())
+                bool doReplace = false;
+                ImguiFileDialog dlg = null;
+                if (GloDat.replaceInput == null)
                 {
-                    BcresSkelAnimationImporter.Import(dlg.FilePath, ((GfxAnimation)Section), GetModel(),
-                        new BcresSkelAnimationImporter.BcresImportSettings()
-                        {
-                            BakeAsMatrices = asMatrices,
-                            BakeAsQuat = !asMatrices,
-                        });
+                    dlg = new ImguiFileDialog();
+                    dlg.SaveDialog = false;
+                    dlg.AddFilter(".anim", "anim");
+                    dlg.AddFilter(".gltf", "gltf");
+                    dlg.AddFilter(".glb", "glb");
+                    dlg.AddFilter(".dae", "dae");
+                    dlg.AddFilter(".smd", "smd");
+                    dlg.FileName = $"{Header}.anim";
+                    if (dlg.ShowDialog())
+                    {
+                        doReplace = true;
+                    }
+                }
+                if (GloDat.replaceInput != null)
+                {
+                    doReplace = true;
+                }
+                if (doReplace)
+                {
+                    string filepath = GloDat.replaceInput;
+                    if (GloDat.replaceInput == null)
+                    {
+                        filepath = dlg.FilePath;
+                    }
+
+                    var originalConsoleOut = Console.Out;
+                    Console.SetOut(TextWriter.Null);
+                    try
+                    {
+                        BcresSkelAnimationImporter.Import(filepath, ((GfxAnimation)Section), GetModel(),
+                            new BcresSkelAnimationImporter.BcresImportSettings()
+                            {
+                                BakeAsMatrices = asMatrices,
+                                BakeAsQuat = !asMatrices,
+                            });
+                    }
+                    finally
+                    {
+                        // Restore the original Console.Out
+                        Console.SetOut(originalConsoleOut);
+                    }
 
                     H3DAnimation = ((GfxAnimation)Section).ToH3DAnimation();
                     ((AnimationWrapper)Tag).Reload(H3DAnimation);
@@ -919,28 +1060,15 @@ namespace CtrLibrary.Bcres
 
             public virtual void Replace()
             {
-                ImguiFileDialog dlg = new ImguiFileDialog();
-                dlg.SaveDialog = false;
-                dlg.FileName = $"{Header}.json";
-                dlg.AddFilter(".json", "json");
-                dlg.AddFilter(".bcres", "bcres");
-                if (dlg.ShowDialog())
-                {
-                    if (dlg.FilePath.EndsWith(".json"))
-                    {
-                        Section = JsonConvert.DeserializeObject<T>(File.ReadAllText(dlg.FilePath));
-                        Dict[this.Header] = (T)Section;
-                        Dict[this.Header].Name = this.Header;
-                    }
-                    else
-                    {
-                        var type = ((H3DGroupNode<T>)this.Parent).Type;
-                        Section = ReplaceRaw(dlg.FilePath, type);
-                    }
-                }
+                // only exists to be overrided idk lol
             }
 
-            public virtual void Export()   
+            public virtual void ReplaceAsBaked(bool asMatrices)
+            {
+                // only exists to be overrided idk lol
+            }
+
+            public virtual void Export()
             {
                 ImguiFileDialog dlg = new ImguiFileDialog();
                 dlg.SaveDialog = true;
