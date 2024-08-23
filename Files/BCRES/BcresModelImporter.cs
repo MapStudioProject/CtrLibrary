@@ -152,6 +152,45 @@ namespace CtrLibrary.Bcres
                     //Copy the parent skeleton data if used
                     if (parent is GfxModelSkeletal)
                     {
+                        // blurro edits here
+                        if (settings.ReplaceBones)
+                        {
+                            Dictionary<string, List<float>> jointDataImport = new Dictionary<string, List<float>>();
+                            foreach (var bone in model.Skeleton.BreathFirstOrder())
+                            {
+                                List<float> transforms = new List<float> { bone.Scale.X, bone.Scale.Y, bone.Scale.Z, bone.RotationEuler.X, bone.RotationEuler.Y, bone.RotationEuler.Z, bone.Translation.X, bone.Translation.Y, bone.Translation.Z };
+                                jointDataImport[bone.Name] = transforms;
+
+                            }
+                            foreach (var bone in ((GfxModelSkeletal)parent).Skeleton.Bones)
+                            {
+                                if (jointDataImport.TryGetValue(bone.Name, out List<float> dataTransform))
+                                {
+                                    Console.WriteLine("\n" + bone.Name);
+                                    Console.WriteLine(bone.Scale.X.ToString() + " " + bone.Scale.Y.ToString() + " " + bone.Scale.Z.ToString());
+                                    Console.WriteLine((bone.Rotation.X * (180f / (float)Math.PI)).ToString() + " " + (bone.Rotation.Y * (180f / (float)Math.PI)).ToString() + " " + (bone.Rotation.Z * (180f / (float)Math.PI)).ToString());
+                                    Console.WriteLine(bone.Translation.X.ToString() + " " + bone.Translation.Y.ToString() + " " + bone.Translation.Z.ToString());
+                                    Console.WriteLine("-->");
+                                    bone.Scale = new Vector3(
+                                    dataTransform[0],
+                                    dataTransform[1],
+                                    dataTransform[2]);
+
+                                    bone.Rotation = new Vector3(
+                                    dataTransform[3],
+                                    dataTransform[4],
+                                    dataTransform[5]);
+
+                                    bone.Translation = new Vector3(
+                                    dataTransform[6],
+                                    dataTransform[7],
+                                    dataTransform[8]);
+                                    Console.WriteLine(bone.Scale.X.ToString() + " " + bone.Scale.Y.ToString() + " " + bone.Scale.Z.ToString());
+                                    Console.WriteLine((bone.Rotation.X * (180f / (float)Math.PI)).ToString() + " " + (bone.Rotation.Y * (180f / (float)Math.PI)).ToString() + " " + (bone.Rotation.Z * (180f / (float)Math.PI)).ToString());
+                                    Console.WriteLine(bone.Translation.X.ToString() + " " + bone.Translation.Y.ToString() + " " + bone.Translation.Z.ToString());
+                                }
+                            }
+                        }
                         skeleton = ((GfxModelSkeletal)parent).Skeleton;
                         ((GfxModelSkeletal)gfxModel).Skeleton = skeleton;
                     }

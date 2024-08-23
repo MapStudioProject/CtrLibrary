@@ -74,9 +74,19 @@ namespace CtrLibrary
                 ImGui.Checkbox("Import Textures", ref Settings.ImportTextures);
 
                 if (!Settings.DisableSkeleton)
-                    ImGui.Checkbox("Import Bones (Experimental)", ref Settings.ImportBones);
+                {
+                    if (!Settings.ReplaceBones)
+                    {
+                        ImGui.Checkbox("Import Bones (Experimental)", ref Settings.ImportBones);
+                        ImGuiHelper.Tooltip("Imports bones from .dae/.fbx. Keep in mind blender is difficult to work with bones and may not output very well.");
+                    }
+                    if (!Settings.ImportBones)
+                    {
+                        ImGui.Checkbox("Replace Bones", ref Settings.ReplaceBones);
+                        ImGuiHelper.Tooltip("Replaces all the Scale, Rotation & Translation values over existing bones.");
+                    }
+                }
 
-                ImGuiHelper.Tooltip("Imports bones from .dae/.fbx. Keep in mind blender is difficult to work with bones and may not output very well.");
                 ImGui.Checkbox("Import Tangents", ref Settings.ImportTangents);
                 ImGui.Checkbox("Import Vertex Colors", ref Settings.ImportVertexColors);
 
@@ -329,7 +339,7 @@ namespace CtrLibrary
         /// <summary>
         /// Imports texture linked from the provided .dae/.fbx file.
         /// </summary>
-        public bool ImportTextures = true;
+        public bool ImportTextures = false;
 
         /// <summary>
         /// Don't import any bones.
@@ -340,6 +350,11 @@ namespace CtrLibrary
         /// Imports bones from the provided .dae/.fbx instead of using original boneset.
         /// </summary>
         public bool ImportBones = false;
+
+        /// <summary>
+        /// Replaces values from the provided .dae/.fbx over original boneset.
+        /// </summary>
+        public bool ReplaceBones = true;
 
         /// <summary>
         /// Determines to import and calculate tangents for all meshes.
