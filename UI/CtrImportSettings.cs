@@ -77,15 +77,21 @@ namespace CtrLibrary
                 {
                     if (!Settings.ReplaceBones)
                     {
-                        ImGui.Checkbox("Import Bones (Experimental)", ref Settings.ImportBones);
-                        ImGuiHelper.Tooltip("Imports bones from .dae/.fbx. Keep in mind blender is difficult to work with bones and may not output very well.");
+                        ImGui.Checkbox("Import & Replace Bones", ref Settings.ImportBones);
+                        ImGuiHelper.Tooltip("Imports all bones from chosen .dae, preserves and inherits original flags.");
                     }
                     if (!Settings.ImportBones)
                     {
                         ImGui.Checkbox("Replace Bones", ref Settings.ReplaceBones);
-                        ImGuiHelper.Tooltip("Replaces all the Scale, Rotation & Translation values over existing bones.");
+                        ImGuiHelper.Tooltip("Replaces imported Scale, Rotation & Translation values over existing bones.");
                     }
                 }
+
+                //if (Settings.ImportBones)
+                //{
+                //    ImGui.Checkbox("Translation Anim Enabled", ref Settings.TranslatEn);
+                //    ImGuiHelper.Tooltip("Off will lock bones in place despite animation.");
+                //}
 
                 ImGui.Checkbox("Import Tangents", ref Settings.ImportTangents);
                 ImGui.Checkbox("Import Vertex Colors", ref Settings.ImportVertexColors);
@@ -354,7 +360,7 @@ namespace CtrLibrary
         /// <summary>
         /// Replaces values from the provided .dae/.fbx over original boneset.
         /// </summary>
-        public bool ReplaceBones = true;
+        public bool ReplaceBones = false;
 
         /// <summary>
         /// Determines to import and calculate tangents for all meshes.

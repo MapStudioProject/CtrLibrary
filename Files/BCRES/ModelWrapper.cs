@@ -498,10 +498,10 @@ namespace CtrLibrary.Bcres
         {
             GfxSkeleton = skeleton;
             FolderUI = folder;
-            FolderUI.ContextMenus.Add(new MenuItemModel("Add Bone", () =>
-            {
-                AddNewBoneAction(FolderUI, null);
-            }));
+            //FolderUI.ContextMenus.Add(new MenuItemModel("Add Bone", () =>
+            //{
+            //    AddNewBoneAction(FolderUI, null);
+            //}));
 
             foreach (var bone in skeleton.Bones)
             {
@@ -542,15 +542,15 @@ namespace CtrLibrary.Bcres
         {
             node.ContextMenus.Clear();
             node.ContextMenus.Add(new MenuItemModel("Rename", () => { node.ActivateRename = true; }));
-            node.ContextMenus.Add(new MenuItemModel(""));
-            node.ContextMenus.Add(new MenuItemModel("Add", () =>
-            {
-                AddNewBoneAction(node, bone);
-            }));
-            node.ContextMenus.Add(new MenuItemModel("Remove", () =>
-            {
-                RemoveBoneAction(node, bone);
-            }));
+            //node.ContextMenus.Add(new MenuItemModel(""));
+            //node.ContextMenus.Add(new MenuItemModel("Add", () =>
+            //{
+            //    AddNewBoneAction(node, bone);
+            //}));
+            //node.ContextMenus.Add(new MenuItemModel("Remove", () =>
+            //{
+            //    RemoveBoneAction(node, bone);
+            //}));
 
             node.CanRename = true;
             node.OnHeaderRenamed += delegate

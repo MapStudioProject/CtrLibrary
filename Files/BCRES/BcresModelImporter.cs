@@ -16,11 +16,18 @@ using SPICA.PICA;
 using Newtonsoft.Json;
 using System.IO;
 using static OpenTK.Graphics.OpenGL.GL;
+using IONET.Collada.Core.Controller;
+using Toolbox.Core;
 
 namespace CtrLibrary.Bcres
 {
     internal class BcresModelImporter
     {
+        public static T DeepClone<T>(T obj)
+        {
+            var json = JsonConvert.SerializeObject(obj);
+            return JsonConvert.DeserializeObject<T>(json);
+        }
         public static GfxModel Import(string filePath, BCRES bcresWrapper, GfxModel parent, CtrImportSettings settings)
         {
             //Load the .dae/.fbx/.obj into a scene object for importing data.
@@ -77,6 +84,11 @@ namespace CtrLibrary.Bcres
                 if (settings.ImportBones)
                 {    //Create a skeleton
                     GfxSkeleton skeleton = new GfxSkeleton();
+
+                    //inherit from original skeleton
+                    skeleton.IsTranslationAnimEnabled = ((GfxModelSkeletal)parent).Skeleton.IsTranslationAnimEnabled;
+                    skeleton.RootBone = ((GfxModelSkeletal)parent).Skeleton.RootBone;
+
                     skeleton.Name = "";
                     skeleton.ScalingRule = GfxSkeletonScalingRule.Maya;
                     skeleton.MetaData = new GfxDict<GfxMetaData>();
@@ -92,15 +104,53 @@ namespace CtrLibrary.Bcres
                     {
                         var bn = new GfxBone();
                         bn.Name = bone.Name;
+                        bool foundInOg = false;
+                        foreach (var ogBone in ((GfxModelSkeletal)parent).Skeleton.Bones)
+                        {
+                            if (ogBone.Name == bone.Name)
+                            {
+                                bn = DeepClone(ogBone);
+                                foundInOg = true;
+                            }
+                        }
+                        if (!foundInOg)
+                        {
+                            if (bone.Parent != null)
+                            {
+                                foreach (var currentBones in skeleton.Bones)
+                                {
+                                    if (currentBones.Name == bone.Parent.Name)
+                                    {
+                                        bn = DeepClone(currentBones);
+                                        bn.Name = bone.Name;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                bn.Flags = GfxBoneFlags.IsNeededRendering | GfxBoneFlags.IsLocalMtxCalculate | GfxBoneFlags.IsWorldMtxCalculate;
+                                bn.Flags |= GfxBoneFlags.HasSkinningMtx;
+                                bn.BillboardMode = GfxBillboardMode.Off;
+                                bn.LocalTransform = new SPICA.Math3D.Matrix3x4(bn.CalculateLocalMatrix());
+                                bn.MetaData = new GfxDict<GfxMetaData>();
+                            }
+                        }
                         bn.Translation = bone.Translation;
                         bn.Rotation = bone.RotationEuler;
-                        bn.Scale = bone.Scale;
-                        bn.BillboardMode = GfxBillboardMode.Off;
-                        bn.Flags = GfxBoneFlags.IsNeededRendering | GfxBoneFlags.IsLocalMtxCalculate | GfxBoneFlags.IsWorldMtxCalculate;
-                        bn.Flags |= GfxBoneFlags.HasSkinningMtx;
+                        if (bone.Parent != null)
+                        {
+                            bn.Scale = new Vector3(
+                                bone.Scale.X * bone.Parent.Scale.X,
+                                bone.Scale.Y * bone.Parent.Scale.Y,
+                                bone.Scale.Z * bone.Parent.Scale.Z
+                            );
+                        }
+                        else
+                        {
+                            // If there's no parent, keep the original scale
+                            bn.Scale = bone.Scale;
+                        }
                         bn.UpdateTransformFlags();
-                        bn.LocalTransform = new SPICA.Math3D.Matrix3x4(bn.CalculateLocalMatrix());
-                        bn.MetaData = new GfxDict<GfxMetaData>();
                         bn.ParentIndex = -1;
                         skeleton.Bones.Add(bn);
                     }
@@ -120,6 +170,7 @@ namespace CtrLibrary.Bcres
                             bn.ParentIndex = skeleton.Bones.Find(boneList[i].Parent.Name);
                         }
                     }
+
                     for (int i = 0; i < boneList.Count; i++)
                     {
                         var bn = skeleton.Bones[boneList[i].Name];
@@ -152,7 +203,6 @@ namespace CtrLibrary.Bcres
                     //Copy the parent skeleton data if used
                     if (parent is GfxModelSkeletal)
                     {
-                        // blurro edits here
                         if (settings.ReplaceBones)
                         {
                             Dictionary<string, List<float>> jointDataImport = new Dictionary<string, List<float>>();
@@ -160,7 +210,6 @@ namespace CtrLibrary.Bcres
                             {
                                 List<float> transforms = new List<float> { bone.Scale.X, bone.Scale.Y, bone.Scale.Z, bone.RotationEuler.X, bone.RotationEuler.Y, bone.RotationEuler.Z, bone.Translation.X, bone.Translation.Y, bone.Translation.Z };
                                 jointDataImport[bone.Name] = transforms;
-
                             }
                             foreach (var bone in ((GfxModelSkeletal)parent).Skeleton.Bones)
                             {
@@ -175,6 +224,15 @@ namespace CtrLibrary.Bcres
                                     dataTransform[0],
                                     dataTransform[1],
                                     dataTransform[2]);
+
+                                    if (bone.Parent != null)
+                                    {
+                                        bone.Scale = new Vector3(
+                                            bone.Scale.X * bone.Parent.Scale.X,
+                                            bone.Scale.Y * bone.Parent.Scale.Y,
+                                            bone.Scale.Z * bone.Parent.Scale.Z
+                                        );
+                                    }
 
                                     bone.Rotation = new Vector3(
                                     dataTransform[3],
@@ -195,6 +253,7 @@ namespace CtrLibrary.Bcres
                         ((GfxModelSkeletal)gfxModel).Skeleton = skeleton;
                     }
                 }
+
                 //If no bones are present, then make default root bone. This is required for transforming in worldspace with a map editor
                 if (((GfxModelSkeletal)gfxModel).Skeleton.Bones.Count == 0)
                 {
