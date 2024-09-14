@@ -666,6 +666,7 @@ namespace CtrLibrary.Bch
                     case ".gltf":
                     case ".smd":
                         BchSkelAnimationImporter.Import(filePath, ((H3DAnimation)Section), GetModel());
+                        ((INamed)Section).Name = this.Header;
                         ReloadName();
                         break;
                     default:
@@ -892,11 +893,16 @@ namespace CtrLibrary.Bch
                 if (filePath.ToLower().EndsWith(".bch") || filePath.ToLower().EndsWith(".bmdl"))
                 {
                     var type = ((H3DGroupNode<T>)this.Parent).Type;
-                    Dict[this.Header] = (T)ReplaceRaw(filePath, type);
+                    Section = (T)ReplaceRaw(filePath, type);
+                    ((INamed)Section).Name = this.Header;
+
+                    Dict[this.Header] = (T)Section;
                 }
                 else
                 {
                     Section = JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
+                    ((INamed)Section).Name = this.Header;
+
                     Dict[this.Header] = (T)Section;
                 }
                 ReloadName();

@@ -40,6 +40,7 @@ using Toolbox.Core.Animations;
 using SPICA.Formats.CtrGfx.Camera;
 using SPICA.Formats.CtrH3D.Camera;
 using SPICA.Formats.CtrGfx.AnimGroup;
+using static System.Collections.Specialized.BitVector32;
 
 namespace CtrLibrary.Bcres
 {
@@ -804,11 +805,12 @@ namespace CtrLibrary.Bcres
                         case ".json":
                             Section = JsonConvert.DeserializeObject<T>(File.ReadAllText(dlg.FilePath));
                             Dict[this.Header] = (T)Section;
-                            Dict[this.Header].Name = this.Header;
+                            ((INamed)Section).Name = this.Header;
                             break;
                         case ".bcres":
                             var type = ((H3DGroupNode<T>)this.Parent).Type;
                             Section = ReplaceRaw(dlg.FilePath, type);
+                            ((INamed)Section).Name = this.Header;
                             break;
                         case ".anim":
                         case ".dae":
@@ -816,6 +818,7 @@ namespace CtrLibrary.Bcres
                         case ".gltf":
                         case ".smd":
                             BcresSkelAnimationImporter.Import(dlg.FilePath, ((GfxAnimation)Section), GetModel());
+                            ((INamed)Section).Name = this.Header;
                             break;
                         default:
                             throw new Exception($"Unsupported file extension {ext}!");
