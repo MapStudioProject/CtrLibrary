@@ -598,6 +598,7 @@ namespace CtrLibrary.Bch
                 //Create an animation wrapper for animation playback if node is an animation type
                 var wrapper = new AnimationWrapper((H3DAnimation)section);
                 Tag = wrapper;
+
                 this.OnHeaderRenamed += delegate
                 {
                     wrapper.Root.Header = this.Header;
@@ -825,6 +826,19 @@ namespace CtrLibrary.Bch
 
                 this.OnHeaderRenamed += delegate
                 {
+                    //not changed
+                    if (this.Header == ((INamed)Section).Name)
+                        return;
+
+                    //dupe key
+                    if (subSections.Contains(this.Header))
+                    {
+                        TinyFileDialog.MessageBoxErrorOk($"{this.Header} name already exist!");
+                        //revert
+                        this.Header = ((INamed)Section).Name;
+                        return;
+                    }
+
                     //Update binary name on tree node rename
                     ReloadName();
                 };

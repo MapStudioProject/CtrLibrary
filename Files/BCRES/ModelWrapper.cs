@@ -30,6 +30,8 @@ using static SPICA.Rendering.Animation.SkeletalAnimation;
 using IONET.Collada.Core.Controller;
 using IONET.Core.Skeleton;
 using static GLFrameworkEngine.SkeletonRenderer;
+using SPICA.Formats.Common;
+using static System.Collections.Specialized.BitVector32;
 
 namespace CtrLibrary.Bcres
 {
@@ -158,7 +160,7 @@ namespace CtrLibrary.Bcres
             {
                 Model.H3DModel.IsVisible = this.IsChecked;
             };
-
+        
             _materialFolder.ContextMenus.Add(new MenuItemModel("Create Material", CreateMaterial));
             _materialFolder.ContextMenus.Add(new MenuItemModel("Import Material", ImportMaterial));
 
@@ -914,6 +916,19 @@ namespace CtrLibrary.Bcres
             GfxModel = model;
             this.OnHeaderRenamed += delegate
             {
+                //not changed
+                if (this.Header == GfxMaterial.Name)
+                    return;
+
+                //dupe key
+                if (model.Materials.Contains(this.Header))
+                {
+                    TinyFileDialog.MessageBoxErrorOk($"{this.Header} name already exist!");
+
+                    //revert
+                    this.Header = ((INamed)GfxMaterial).Name;
+                    return;
+                }
                 GfxMaterial.Name = this.Header;
             };
         }

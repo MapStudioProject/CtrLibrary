@@ -34,7 +34,6 @@ using SPICA.Formats.CtrGfx.Fog;
 using SPICA.Formats.CtrGfx.Scene;
 using SPICA.Formats.CtrGfx.Shader;
 using Discord;
-using static System.Collections.Specialized.BitVector32;
 using SPICA.PICA.Shader;
 using static CtrLibrary.Bch.BCH;
 using Toolbox.Core.Animations;
@@ -901,6 +900,20 @@ namespace CtrLibrary.Bcres
 
                 this.OnHeaderRenamed += delegate
                 {
+                    //not changed
+                    if (this.Header == ((INamed)Section).Name)
+                        return;
+
+                    //dupe key
+                    if (this.Dict.Contains(this.Header))
+                    {
+                        TinyFileDialog.MessageBoxErrorOk($"{this.Header} name already exist!");
+
+                        //revert
+                        this.Header = ((INamed)Section).Name;
+                        return;
+                    }
+
                     var index = this.Dict.Find(((T)this.Section).Name);
                     if (index != -1)
                         this.Dict.Remove((T)this.Section);

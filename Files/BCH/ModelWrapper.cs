@@ -764,6 +764,18 @@ namespace CtrLibrary.Bch
             };
             this.OnHeaderRenamed += delegate
             {
+                //not changed
+                if (this.Header == Material.Name)
+                    return;
+
+                //dupe key
+                if (model.Materials.Contains(this.Header))
+                {
+                    TinyFileDialog.MessageBoxErrorOk($"{this.Header} name already exist!");
+                    //revert
+                    this.Header = Material.Name;
+                    return;
+                }
                 //reinsert the material into the list to update dictionary keys
                 int index = model.Materials.Find(Material.Name);
 

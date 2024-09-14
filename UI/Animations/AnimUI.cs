@@ -68,6 +68,18 @@ namespace CtrLibrary
             elemNode.CanRename = true;
             elemNode.OnHeaderRenamed += delegate
             {
+                //not changed
+                if (elemNode.Header == group.Name)
+                    return;
+
+                //dupe key
+                if (Root.Children.Any(x => x.Header == elemNode.Header))
+                {
+                    TinyFileDialog.MessageBoxErrorOk($"{elemNode.Header} name already exist!");
+                    //revert
+                    elemNode.Header = group.Name;
+                    return;
+                }
                 //Rename all anim nodes that target this material
                 var elements = anim.AnimGroups.Where(x => x.Name == group.Name).ToList();
                 for (int i = 0; i < elements.Count; i++)
