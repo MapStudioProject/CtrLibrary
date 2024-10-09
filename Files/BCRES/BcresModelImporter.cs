@@ -538,11 +538,6 @@ namespace CtrLibrary.Bcres
             Queue<ushort> IndicesQueue = new Queue<ushort>(faces);
             List<GfxSubMesh> subMeshes = new List<GfxSubMesh>();
 
-            if (settings.DivideMK7)
-            {
-                return SplitByDiv(mesh, poly, settings);
-            }
-
             //Split the mesh into sub meshes based on the max amount of bones used
             while (IndicesQueue.Count > 0)
             {
@@ -657,11 +652,14 @@ namespace CtrLibrary.Bcres
 
             vertices = newVertices.ToArray();
 
+            if (settings.DivideMK7 && subMeshes.Count == 1) //split using the already optimized indices
+                return SplitByDiv(mesh, subMeshes[0].Faces[0].FaceDescriptors[0].Indices, settings);
+
             return subMeshes;
         }
 
         //Splits sub meshes by .div
-        static List<GfxSubMesh> SplitByDiv(IOMesh mesh, IOPolygon poly, CtrImportSettings settings)
+        static List<GfxSubMesh> SplitByDiv(IOMesh mesh, ushort[] indices, CtrImportSettings settings)
         {
             //Sub meshes
             List<GfxSubMesh> subMeshes = new List<GfxSubMesh>();
@@ -684,7 +682,7 @@ namespace CtrLibrary.Bcres
 
             //Generate a triangle list to make checks easier.
             List<Triangle> triangles = new List<Triangle>();
-            for (int i = 0; i < poly.Indicies.Count / 3; i++)
+            for (int i = 0; i < indices.Length / 3; i++)
             {
                 int ind = i * 3;
 
@@ -692,8 +690,8 @@ namespace CtrLibrary.Bcres
                 triangles.Add(tri);
                 for (int j = 0; j < 3; j++)
                 {
-                    tri.Indices.Add(poly.Indicies[ind + j]);
-                    tri.Vertices.Add(mesh.Vertices[poly.Indicies[ind + j]].Position);
+                    tri.Indices.Add(indices[ind + j]);
+                    tri.Vertices.Add(mesh.Vertices[indices[ind + j]].Position);
                 }
             }
             triangles = triangles.OrderBy(tri => tri.GetMinZ()).ToList();
