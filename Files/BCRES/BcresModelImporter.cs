@@ -653,13 +653,13 @@ namespace CtrLibrary.Bcres
             vertices = newVertices.ToArray();
 
             if (settings.DivideMK7 && subMeshes.Count == 1) //split using the already optimized indices
-                return SplitByDiv(mesh, subMeshes[0].Faces[0].FaceDescriptors[0].Indices, settings);
+                return SplitByDiv(mesh, vertices.Length, subMeshes[0].Faces[0].FaceDescriptors[0].Indices, settings);
 
             return subMeshes;
         }
 
         //Splits sub meshes by .div
-        static List<GfxSubMesh> SplitByDiv(IOMesh mesh, ushort[] indices, CtrImportSettings settings)
+        static List<GfxSubMesh> SplitByDiv(IOMesh mesh, int vertexCount, ushort[] indices, CtrImportSettings settings)
         {
             //Sub meshes
             List<GfxSubMesh> subMeshes = new List<GfxSubMesh>();
@@ -677,7 +677,7 @@ namespace CtrLibrary.Bcres
 
             //Stream per mesh
             CDAB.MeshStream streamData = new CDAB.MeshStream();
-            streamData.VertexCount = (ushort)mesh.Vertices.Count;
+            streamData.VertexCount = (ushort)vertexCount;
             clipData.Shapes[0].Streams.Add(streamData);
 
             //Generate a triangle list to make checks easier.
