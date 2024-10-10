@@ -653,13 +653,13 @@ namespace CtrLibrary.Bcres
             vertices = newVertices.ToArray();
 
             if (settings.DivideMK7 && subMeshes.Count == 1) //split using the already optimized indices
-                return SplitByDiv(mesh, vertices.Length, subMeshes[0].Faces[0].FaceDescriptors[0].Indices, settings);
+                return SplitByDiv(vertices, subMeshes[0].Faces[0].FaceDescriptors[0].Indices, settings);
 
             return subMeshes;
         }
 
         //Splits sub meshes by .div
-        static List<GfxSubMesh> SplitByDiv(IOMesh mesh, int vertexCount, ushort[] indices, CtrImportSettings settings)
+        static List<GfxSubMesh> SplitByDiv(PICAVertex[] vertices, ushort[] indices, CtrImportSettings settings)
         {
             //Sub meshes
             List<GfxSubMesh> subMeshes = new List<GfxSubMesh>();
@@ -677,7 +677,7 @@ namespace CtrLibrary.Bcres
 
             //Stream per mesh
             CDAB.MeshStream streamData = new CDAB.MeshStream();
-            streamData.VertexCount = (ushort)vertexCount;
+            streamData.VertexCount = (ushort)vertices.Length;
             clipData.Shapes[0].Streams.Add(streamData);
 
             //Generate a triangle list to make checks easier.
@@ -691,7 +691,10 @@ namespace CtrLibrary.Bcres
                 for (int j = 0; j < 3; j++)
                 {
                     tri.Indices.Add(indices[ind + j]);
-                    tri.Vertices.Add(mesh.Vertices[indices[ind + j]].Position);
+                    tri.Vertices.Add(new Vector3(
+                        vertices[indices[ind + j]].Position.X,
+                        vertices[indices[ind + j]].Position.Y,
+                        vertices[indices[ind + j]].Position.Z));
                 }
             }
             triangles = triangles.OrderBy(tri => tri.GetMinZ()).ToList();
@@ -765,7 +768,7 @@ namespace CtrLibrary.Bcres
                 zstrip.Clear();
             }
 
-            Console.WriteLine($"Mesh {mesh.Name} split {face.FaceDescriptors.Count} times.");
+            Console.WriteLine($"split {face.FaceDescriptors.Count} times.");
 
             return subMeshes;
         }
