@@ -79,6 +79,7 @@ namespace CtrLibrary
                 ImGuiHelper.Tooltip("Imports bones from .dae/.fbx. Keep in mind blender is difficult to work with bones and may not output very well.");
                 ImGui.Checkbox("Import Tangents", ref Settings.ImportTangents);
                 ImGui.Checkbox("Import Vertex Colors", ref Settings.ImportVertexColors);
+                ImGui.Checkbox("Import Vertex Normals", ref Settings.ImportNormals);
 
                 ImGui.Checkbox("Flip UVs", ref Settings.FlipUVs);
                 ImGui.Checkbox("Optimize Vertices", ref Settings.Optimize);
@@ -350,6 +351,11 @@ namespace CtrLibrary
         /// Determines to import vertex colors for all meshes.
         /// </summary>
         public bool ImportVertexColors = true;
+
+        /// <summary>
+        /// 
+        /// Determines to import vertex normals for all meshes.
+        public bool ImportNormals = true;
 
         /// <summary>
         /// Determines to optmize the vertices before import by removing duplicates.
