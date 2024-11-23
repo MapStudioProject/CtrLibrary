@@ -84,7 +84,7 @@ namespace CtrLibrary
             var sca = Material.MaterialParams.LUTInputScale;
             var sel = Material.MaterialParams.LUTInputSelection;
             var prm = Material.MaterialParams;
-            string[] layer = LayerConfig[(int)prm.TranslucencyKind];
+            string[] layer = (int)prm.TranslucencyKind < LayerConfig.Length ? LayerConfig[(int)prm.TranslucencyKind] : new string[0];
 
             bool clampSpecular = Material.MaterialParams.FragmentFlags.HasFlag(H3DFragmentFlags.IsClampHighLightEnabled);
             bool geoFactor0 = Material.MaterialParams.FragmentFlags.HasFlag(H3DFragmentFlags.IsLUTGeoFactor0Enabled);
