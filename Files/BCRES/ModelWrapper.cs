@@ -308,9 +308,13 @@ namespace CtrLibrary.Bcres
             dlg.FileName = $"{Header}";
             dlg.AddFilter(".dae", "dae");
             dlg.AddFilter(".json", "json");
+            dlg.AddFilter(".glb", "glb");
+            dlg.AddFilter(".gltf", "gltf");
             if (dlg.ShowDialog())
             {
-                if (dlg.FilePath.EndsWith(".dae"))
+                if (dlg.FilePath.EndsWith(".dae") ||
+                    dlg.FilePath.EndsWith(".glb") ||
+                    dlg.FilePath.EndsWith(".gltf"))
                 {
                     int modelIndex = BcresFile.Models.Find(Model.Name);
                     var h3d = BcresFile.ToH3D();
@@ -340,7 +344,8 @@ namespace CtrLibrary.Bcres
             dlg.FileName = $"{Header}";
             dlg.AddFilter(".dae", "dae");
             dlg.AddFilter(".glb", "glb");
-            dlg.AddFilter(".fbx", "fbx");
+            dlg.AddFilter(".gltf", "gltf");
+           // dlg.AddFilter(".fbx", "fbx"); // FBX barely works so disable for now
             dlg.AddFilter(".smd", "smd");
             if (dlg.ShowDialog())
             {
@@ -348,6 +353,7 @@ namespace CtrLibrary.Bcres
                     dlg.FilePath.ToLower().EndsWith(".fbx") ||
                     dlg.FilePath.ToLower().EndsWith(".smd") ||
                     dlg.FilePath.ToLower().EndsWith(".glb") ||
+                    dlg.FilePath.ToLower().EndsWith(".gltf") ||
                     dlg.FilePath.ToLower().EndsWith(".obj"))
                 {
                     CtrModelImportUI importerUI = new CtrModelImportUI();
