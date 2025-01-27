@@ -308,8 +308,8 @@ namespace CtrLibrary.Bcres
             dlg.FileName = $"{Header}";
             dlg.AddFilter(".dae", "dae");
             dlg.AddFilter(".json", "json");
-            dlg.AddFilter(".glb", "glb");
-            dlg.AddFilter(".gltf", "gltf");
+         //   dlg.AddFilter(".glb", "glb");
+          //  dlg.AddFilter(".gltf", "gltf");
             if (dlg.ShowDialog())
             {
                 if (dlg.FilePath.EndsWith(".dae") ||
