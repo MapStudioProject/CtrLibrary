@@ -978,7 +978,7 @@ namespace CtrLibrary.Bcres
                     picaVertex.TexCoord1 = new Vector4(vertex.UVs[1].X, vertex.UVs[1].Y, 0, 0);
                 if (vertex.UVs?.Count > 2)
                     picaVertex.TexCoord2 = new Vector4(vertex.UVs[2].X, vertex.UVs[2].Y, 0, 0);
-                picaVertex.Tangent = new Vector4(vertex.Tangent.X, vertex.Tangent.Y, vertex.Tangent.Z, 1.0f);
+                picaVertex.Tangent = new Vector4(vertex.Tangent.X, vertex.Tangent.Y, vertex.Tangent.Z, 0.0f);
 
                 for (int j = 0; j < vertex.Envelope.Weights.Count; j++)
                 {
