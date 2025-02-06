@@ -33,12 +33,17 @@ namespace CtrLibrary.Files.BCH
                 };
                 if (!string.IsNullOrEmpty(material.Texture0Name))
                 {
-                    iomaterial.DiffuseMap = new()
+                    string folder = Path.GetDirectoryName(filePath);
+                    string path = Path.Combine(folder, material.Texture0Name + ".png");
+                    if (File.Exists(path))
                     {
-                        FilePath = material.Texture0Name + ".png",
-                        WrapS = ConvertWrap(material.TextureMappers[0].WrapU),
-                        WrapT = ConvertWrap(material.TextureMappers[0].WrapV),
-                    };
+                        iomaterial.DiffuseMap = new()
+                        {
+                            FilePath = path,
+                            WrapS = ConvertWrap(material.TextureMappers[0].WrapU),
+                            WrapT = ConvertWrap(material.TextureMappers[0].WrapV),
+                        };
+                    }
                 }
                 ioscene.Materials.Add(iomaterial);
             }
