@@ -32,6 +32,7 @@ using IONET.Core.Skeleton;
 using static GLFrameworkEngine.SkeletonRenderer;
 using SPICA.Formats.Common;
 using static System.Collections.Specialized.BitVector32;
+using CtrLibrary.Files.BCH;
 
 namespace CtrLibrary.Bcres
 {
@@ -306,23 +307,19 @@ namespace CtrLibrary.Bcres
             ImguiFileDialog dlg = new ImguiFileDialog();
             dlg.SaveDialog = true;
             dlg.FileName = $"{Header}";
+            dlg.AddFilter(".gltf", "gltf");
+            dlg.AddFilter(".glb", "glb");
             dlg.AddFilter(".dae", "dae");
             dlg.AddFilter(".json", "json");
-         //   dlg.AddFilter(".glb", "glb");
-          //  dlg.AddFilter(".gltf", "gltf");
             if (dlg.ShowDialog())
             {
                 if (dlg.FilePath.EndsWith(".dae") ||
+                    dlg.FilePath.EndsWith(".gltf") ||
                     dlg.FilePath.EndsWith(".glb") ||
-                    dlg.FilePath.EndsWith(".gltf"))
+                    dlg.FilePath.EndsWith(".obj") ||
+                    dlg.FilePath.EndsWith(".fbx"))
                 {
-                    int modelIndex = BcresFile.Models.Find(Model.Name);
-                    var h3d = BcresFile.ToH3D();
-                    var collada = new SPICA.Formats.Generic.COLLADA.DAE(h3d, modelIndex);
-                    collada.Save(dlg.FilePath);
-
                     string folder = Path.GetDirectoryName(dlg.FilePath);
-
                     foreach (var tex in BcresFile.Textures)
                     {
                         //Save image as png
@@ -331,8 +328,10 @@ namespace CtrLibrary.Bcres
                         image.SaveAsPng(Path.Combine(folder, $"{tex.Name}.png"));
                         image.Dispose();
                     }
+
+                    BchModelExporter.Export(Model.ToH3D(), dlg.FilePath);
                 }
-                if (dlg.FilePath.EndsWith(".json"))
+                else if (dlg.FilePath.EndsWith(".json"))
                     File.WriteAllText(dlg.FilePath, JsonConvert.SerializeObject(Model, Formatting.Indented));
             }
         }

@@ -33,6 +33,7 @@ using static CtrLibrary.Bch.BCH;
 using SixLabors.ImageSharp.Processing;
 using Toolbox.Core.IO;
 using Toolbox.Core.Imaging;
+using CtrLibrary.Files.BCH;
 
 namespace CtrLibrary.Bch
 {
@@ -97,15 +98,19 @@ namespace CtrLibrary.Bch
             ImguiFileDialog dlg = new ImguiFileDialog();
             dlg.SaveDialog = false;
             dlg.AddFilter(".dae", "dae");
-            dlg.AddFilter(".fbx", "fbx");
+           // dlg.AddFilter(".fbx", "fbx");
             dlg.AddFilter(".smd", "smd");
-            dlg.AddFilter(".bch", "bch");   
+            dlg.AddFilter(".bch", "bch");
+            dlg.AddFilter(".gltf", "gltf");
+            dlg.AddFilter(".glb", "glb");
 
             if (dlg.ShowDialog())
             {
                 if (dlg.FilePath.ToLower().EndsWith(".dae") ||
                     dlg.FilePath.ToLower().EndsWith(".fbx") ||
                     dlg.FilePath.ToLower().EndsWith(".smd") ||
+                    dlg.FilePath.ToLower().EndsWith(".gltf") ||
+                    dlg.FilePath.ToLower().EndsWith(".glb") ||
                     dlg.FilePath.ToLower().EndsWith(".obj"))
                 {
                     CtrModelImportUI importerUI = new CtrModelImportUI();
@@ -175,11 +180,11 @@ namespace CtrLibrary.Bch
 
         public Type GetTypeUI() => typeof(BchModelUI);
 
-        public override string[] ExportFilters => new string[] { ".dae", ".fbx", ".smd", ".bch" };
+        public override string[] ExportFilters => new string[] { ".dae", ".gltf", ".glb", ".fbx", ".smd", ".bch" };
 
-        public override string[] ReplaceFilters => new string[] { ".dae", ".fbx", ".smd", ".bch" };
+        public override string[] ReplaceFilters => new string[] { ".dae", ".gltf", ".glb", ".fbx", ".smd", ".bch" };
 
-        public override string DefaultExtension => ".dae";
+        public override string DefaultExtension => ".gltf";
 
         public void OnLoadUI(object uiInstance)
         {
@@ -309,40 +314,12 @@ namespace CtrLibrary.Bch
 
         public override void Export(string filePath)
         {
-            if (filePath.EndsWith(".dae"))
+            if (filePath.EndsWith(".dae") ||
+                filePath.EndsWith(".gltf") ||
+                filePath.EndsWith(".glb") ||
+                filePath.EndsWith(".obj") ||
+                filePath.EndsWith(".fbx"))
             {
-                /*    var archive = STFileLoader.OpenFileFormat("archive.arc") as IArchiveFile;
-                    if (archive == null)
-                        return;
-
-                    foreach (var file in archive.Files)
-                    {
-                        //Check if file data in archive is BCH
-                        using (var reader = new FileReader(file.FileData, true))
-                        {
-                            if (!reader.CheckSignature(3, "BCH"))
-                                continue;
-                        }
-
-                        //Load BCH
-                        var bch = H3D.Open(file.FileData.ToArray());
-                        for (int i = 0; i < bch.Models.Count; i++)
-                        {
-                            var dae = new SPICA.Formats.Generic.COLLADA.DAE(H3DFile, i);
-                            dae.Save(string.Format("{0}.dae", bch.Models[i].Name));
-                        }
-
-                        string folder = Path.GetDirectoryName(filePath);
-                        foreach (var h3dTex in bch.Textures)
-                        {
-                            //Save image as png
-                            var image = h3dTex.ToBitmap();
-                            image.SaveAsPng(Path.Combine(folder, $"{h3dTex.Name}.png"));
-                            image.Dispose();
-                        }
-                    }
-                    */
-
                 string folder = Path.GetDirectoryName(filePath);
                 foreach (var h3dTex in H3DFile.Textures)
                 {
@@ -352,9 +329,7 @@ namespace CtrLibrary.Bch
                     image.Dispose();
                 }
 
-                int modelIndex = H3DFile.Models.Find(Model.Name);
-                var collada = new SPICA.Formats.Generic.COLLADA.DAE(H3DFile, modelIndex);
-                collada.Save(filePath);
+                BchModelExporter.Export(Model, filePath);
             }
             else if (filePath.EndsWith(".json"))
                 File.WriteAllText(filePath, JsonConvert.SerializeObject(Model, Formatting.Indented));
