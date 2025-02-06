@@ -29,6 +29,7 @@ namespace CtrLibrary.Files.BCH
                 IOMaterial iomaterial = new()
                 {
                     Name = material.Name,
+                    Label = material.Name,
                 };
                 if (!string.IsNullOrEmpty(material.Texture0Name))
                 {
@@ -92,7 +93,10 @@ namespace CtrLibrary.Files.BCH
 
 
 
-                IOPolygon iopoly = new();
+                IOPolygon iopoly = new()
+                {
+                    MaterialName = model.Materials[mesh.MaterialIndex].Name
+                };
                 iomesh.Polygons.Add(iopoly);
 
                 foreach (var ind in indices)
