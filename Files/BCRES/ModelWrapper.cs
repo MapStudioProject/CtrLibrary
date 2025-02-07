@@ -154,6 +154,19 @@ namespace CtrLibrary.Bcres
             ContextMenus.Add(new MenuItemModel(""));
             ContextMenus.Add(new MenuItemModel("Rename", () => { this.ActivateRename = true; }));
             ContextMenus.Add(new MenuItemModel(""));
+            ContextMenus.Add(new MenuItemModel("Show All Meshes", () =>
+            {
+                foreach (var child in _meshFolder.Children)
+                    child.IsChecked = true;
+                GLContext.ActiveContext.UpdateViewport = true;
+            }));
+            ContextMenus.Add(new MenuItemModel("Hide All Meshes", () =>
+            {
+                foreach (var child in _meshFolder.Children)
+                    child.IsChecked = false;
+                GLContext.ActiveContext.UpdateViewport = true;
+            }));
+            ContextMenus.Add(new MenuItemModel(""));
             ContextMenus.Add(new MenuItemModel("Delete", Delete));
 
             HasCheckBox = true;
