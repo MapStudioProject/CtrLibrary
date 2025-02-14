@@ -203,15 +203,19 @@ namespace CtrLibrary.Files.BCH
 
                     for (int j = 0; j < boneWeights[v].Length; j++)
                     {
-                        var boneIndex = boneIndices[v][j];
+                        if (boneWeights[v][j] == 0)
+                            continue;
 
                         if (boneWeights[v][j] != 0)
+                        {
+                            var boneIndex = boneIndices[v][j];
                             iovertex.Envelope.Weights.Add(new IOBoneWeight()
                             {
                                 Weight = boneWeights[v][j],
                                 BoneName = model.Skeleton[boneIndex].Name,
                                 BindMatrix = model.Skeleton[boneIndex].InverseTransform,
                             });
+                        }
                     }
 
                     iomesh.Vertices.Add(iovertex);
