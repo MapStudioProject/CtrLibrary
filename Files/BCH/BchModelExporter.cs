@@ -201,20 +201,23 @@ namespace CtrLibrary.Files.BCH
                     if (hasTexCoord2) iovertex.SetUV(vertex.TexCoord2.X, vertex.TexCoord2.Y, 2);
                     if (hasColor) iovertex.SetColor(vertex.Color.X, vertex.Color.Y, vertex.Color.Z, vertex.Color.W, 0);
 
-                    for (int j = 0; j < boneWeights[v].Length; j++)
+                    if (model.Skeleton.Count > 1)
                     {
-                        if (boneWeights[v][j] == 0)
-                            continue;
-
-                        if (boneWeights[v][j] != 0)
+                        for (int j = 0; j < boneWeights[v].Length; j++)
                         {
-                            var boneIndex = boneIndices[v][j];
-                            iovertex.Envelope.Weights.Add(new IOBoneWeight()
+                            if (boneWeights[v][j] == 0)
+                                continue;
+
+                            if (boneWeights[v][j] != 0)
                             {
-                                Weight = boneWeights[v][j],
-                                BoneName = model.Skeleton[boneIndex].Name,
-                                BindMatrix = model.Skeleton[boneIndex].InverseTransform,
-                            });
+                                var boneIndex = boneIndices[v][j];
+                                iovertex.Envelope.Weights.Add(new IOBoneWeight()
+                                {
+                                    Weight = boneWeights[v][j],
+                                    BoneName = model.Skeleton[boneIndex].Name,
+                                    BindMatrix = model.Skeleton[boneIndex].InverseTransform,
+                                });
+                            }
                         }
                     }
 
