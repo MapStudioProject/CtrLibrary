@@ -170,6 +170,9 @@ namespace CtrLibrary.Files.BCH
                 bool hasTangent   = attributes.Any(x => x == PICAAttributeName.Tangent);
                 bool hasBoneIndices = attributes.Any(x => x == PICAAttributeName.BoneIndex);
                 bool hasBoneWeights = attributes.Any(x => x == PICAAttributeName.BoneWeight);
+                bool hasNormals = attributes.Any(x => x == PICAAttributeName.Normal);
+
+                iomesh.HasNormals = hasNormals;
 
                 for (int v = 0; v < vertices.Length; v++)
                 {
@@ -196,9 +199,6 @@ namespace CtrLibrary.Files.BCH
                             Z = vertex.Tangent.Z
                         },
                     };
-
-                    if (iovertex.Normal == Vector3.Zero)
-                        iovertex.Normal = new Vector3(0, 1, 0);
 
                     if (hasTexCoord0) iovertex.SetUV(vertex.TexCoord0.X, vertex.TexCoord0.Y, 0);
                     if (hasTexCoord1) iovertex.SetUV(vertex.TexCoord1.X, vertex.TexCoord1.Y, 1);
