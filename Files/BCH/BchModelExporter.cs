@@ -11,6 +11,7 @@ using SPICA.PICA.Converters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -195,6 +196,9 @@ namespace CtrLibrary.Files.BCH
                             Z = vertex.Tangent.Z
                         },
                     };
+
+                    if (iovertex.Normal == Vector3.Zero)
+                        iovertex.Normal = new Vector3(0, 1, 0);
 
                     if (hasTexCoord0) iovertex.SetUV(vertex.TexCoord0.X, vertex.TexCoord0.Y, 0);
                     if (hasTexCoord1) iovertex.SetUV(vertex.TexCoord1.X, vertex.TexCoord1.Y, 1);
