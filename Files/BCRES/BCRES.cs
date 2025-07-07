@@ -157,15 +157,7 @@ namespace CtrLibrary.Bcres
                 }
             };
 
-            var light = Render.Renderer.Lights[0];
-           // AddRender(new SceneLightingUI.LightPreview(light));
-
-            foreach (var lightNode in SceneLightingUI.Setup(Render, Render.Renderer.Lights))
-            {
-                Root.AddChild(lightNode);
-                //only load one scene light for global usage
-                break;
-            }
+            Root.AddChild(SceneLightingUI.Setup(Render));
 
             ModelFolder = new ModelFolder(this, BcresData, h3d);
             TextureFolder = new Bch.TextureFolder<H3DTexture>(Render, h3d.Textures);

@@ -68,31 +68,15 @@ namespace CtrLibrary.Rendering
 
         public H3DRender(H3DRender cached, NodeBase parent) : base(parent)
         {
+            try {
+                SceneLightConfig.LoadDefault();
+            }
+            catch { }
+
             Renderer = new Renderer(1, 1);
             Renderer.LoadCached(cached.Renderer);
-         /*   Renderer.Lights.Add(new Light()
-            {
-                Ambient = new Color4(0.1f, 0.1f, 0.1f, 1.0f),
-                Diffuse = new Color4(0.4f, 0.4f, 0.4f, 1.0f),
-                Specular0 = new Color4(0.3f, 0.3f, 0.3f, 1.0f),
-                Specular1 = new Color4(0.4f, 0.4f, 0.4f, 1.0f),
-                TwoSidedDiffuse = true,
-                Position = new OpenTK.Vector3(0, 0, 0),
-                Enabled = true,
-                Type = LightType.PerFragment,
-            });*/
-
-            Renderer.Lights.Add(new Light()
-            {
-                Ambient = new Color4(0.1f, 0.1f, 0.1f, 1.0f),
-                Diffuse = new Color4(1, 1, 1, 1.0f),
-                Specular0 = new Color4(0.3f, 0.3f, 0.3f, 1.0f),
-                Specular1 = new Color4(0.4f, 0.4f, 0.4f, 1.0f),
-                TwoSidedDiffuse = true,
-                Position = new OpenTK.Vector3(0, 0, 0),
-                Enabled = true,
-                Type = LightType.PerFragment,
-            });
+            // Load lighting from the current config
+            Renderer.Lights.Add(SceneLightConfig.Current.Light);
 
             //Caches are used to search up globally loaded data within the UI and renders
             //So a file can access the data externally from other files
@@ -182,6 +166,12 @@ namespace CtrLibrary.Rendering
                     LUTCacheManager.Cache.Add(lut.Name, lut);
             }
 
+            try
+            {
+                SceneLightConfig.LoadDefault();
+            }
+            catch { }
+
             Scene = h3d;
 
             //Local render for workspaces
@@ -190,29 +180,7 @@ namespace CtrLibrary.Rendering
 
             H3DRenderCache.Add(this);
 
-            //Configurable scene lighting
-            if (File.Exists("CtrScene.json"))
-            {
-                var lights = JsonConvert.DeserializeObject<Light[]>(File.ReadAllText("CtrScene.json"));
-                foreach (var light in lights)
-                    Renderer.Lights.Add(light);
-            }
-            else
-            {
-                Renderer.Lights.Add(new Light()
-                {
-                    Ambient = new Color4(0.5f, 0.45f, 0.56f, 1.0f),
-                    Diffuse = new Color4(0.35f, 0.35f, 0.35f, 1.0f),
-                    Specular0 = new Color4(0.7f, 0.7f, 0.7f, 1.0f),
-                    Specular1 = new Color4(0.3f, 0.3f, 0.3f, 1.0f),
-                    TwoSidedDiffuse = false,
-                    Position = new OpenTK.Vector3(10000, 10000, 10000),
-                    Direction = new Vector3(-0.286f, -0.953f, -0.095f),
-                    Enabled = true,
-                    Directional = true,
-                    Type = LightType.PerFragment,
-                });
-            }
+            Renderer.Lights.Add(SceneLightConfig.Current.Light);
             Renderer.Merge(Scene);  
 
             //Load the render cache for loading globally renderable data (textures, luts)

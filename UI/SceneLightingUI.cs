@@ -12,6 +12,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Toolbox.Core.ViewModels;
+using static Toolbox.Core.IO.STFileLoader;
 
 namespace CtrLibrary.UI
 {
@@ -52,7 +53,8 @@ namespace CtrLibrary.UI
                 if (pass != Pass.TRANSPARENT)
                     return;
 
-                Model.Transform.Position = Light.Position;
+                Model.Transform.Position = new OpenTK.Vector3(
+                    Light.Position.X, Light.Position.Y, Light.Position.Z);
                 Model.Transform.UpdateMatrix(true);
                 Model.DrawModel(control);
             }
@@ -62,48 +64,65 @@ namespace CtrLibrary.UI
             }
         }
 
-        public static List<NodeBase> Setup(H3DRender render, List<Light> lights)
+        public static NodeBase Setup(H3DRender render)
         {
-            List<NodeBase> nodes = new List<NodeBase>();
-            foreach (Light light in lights)
+
+            var lightNode = new NodeBase("Scene Light")
             {
-                var lightNode = new NodeBase("Scene Light")
+                Tag = SceneLightConfig.Current.Light,
+                Icon = IconManager.LIGHT_ICON.ToString(),
+            };
+            lightNode.TagUI.UIDrawer += delegate
+            {
+                var light = SceneLightConfig.Current.Light;
+
+                bool update = false;
+
+                if (ImGui.Button("Save Settings"))
+                    SceneLightConfig.Current.Save();
+
+                if (ImGui.BeginCombo("Presets", SceneLightConfig.Current.Name))
                 {
-                    Tag = light,
-                    Icon = IconManager.LIGHT_ICON.ToString(),
-                };
-                lightNode.TagUI.UIDrawer += delegate
+                    foreach (var preset in SceneLightConfig.Presets)
+                    {
+                        bool selected = SceneLightConfig.Current == preset;
+                        if (ImGui.Selectable(preset.Name, selected))
+                        {
+                            SceneLightConfig.Current = preset;
+                            SceneLightConfig.Current.Save();
+                        }
+                        if (selected)
+                            ImGui.SetItemDefaultFocus();
+                    }
+                    ImGui.EndCombo();
+                }
+
+                if (ImGui.CollapsingHeader("Hemi Lighting", ImGuiTreeNodeFlags.DefaultOpen))
                 {
-                    bool update = false;
+                    update |= ImGui.ColorEdit3("Sky Color", ref Renderer.GlobalHsLSCol);
+                    update |= ImGui.ColorEdit3("Ground Color", ref Renderer.GlobalHsLGCol);
+                }
+                if (ImGui.CollapsingHeader("Lighting", ImGuiTreeNodeFlags.DefaultOpen))
+                {
+                    update |= ImGui.Checkbox("Enabled", ref light.Enabled);
+                    update |= ImGui.Checkbox("TwoSidedDiffuse", ref light.TwoSidedDiffuse);
 
-                    if (ImGui.CollapsingHeader("Hemi Lighting", ImGuiTreeNodeFlags.DefaultOpen))
-                    {
-                        update |= ImGui.ColorEdit3("Sky Color", ref Renderer.GlobalHsLSCol);
-                        update |= ImGui.ColorEdit3("Ground Color", ref Renderer.GlobalHsLGCol);
-                    }
-                    if (ImGui.CollapsingHeader("Lighting", ImGuiTreeNodeFlags.DefaultOpen))
-                    {
-                        update |= ImGui.Checkbox("Enabled", ref light.Enabled);
-                        update |= ImGui.Checkbox("TwoSidedDiffuse", ref light.TwoSidedDiffuse);
+                    BcresUIHelper.DrawEnum("Type", ref light.Type, () => { update = true; });
+                    update |= ImGui.DragFloat3("Position", ref light.Position);
+                    update |= ImGui.DragFloat3("Direction", ref light.Direction);
 
-                        BcresUIHelper.DrawEnum("Type", ref light.Type, () => { update = true; });
-                        update |= EditVec3("Position", ref light.Position);
-                        update |= EditVec3("Direction", ref light.Direction);
-
-                        update |= EditColor("Diffuse", ref light.Diffuse); ImGui.SameLine();
-                        update |= EditColor("Specular0", ref light.Specular0); ImGui.SameLine();
-                        update |= EditColor("Specular1", ref light.Specular1);
-                        update |= EditColor("Ambient", ref light.Ambient);
-                    }
-                    if (update)
-                    {   
-                        GLContext.ActiveContext.UpdateViewport = true;
-                        render.UpdateAllUniforms();
-                    }
-                };
-                nodes.Add(lightNode);
-            }
-            return nodes;
+                    update |= ImGui.ColorEdit4("Diffuse", ref light.Diffuse, ImGuiColorEditFlags.NoInputs); ImGui.SameLine();
+                    update |= ImGui.ColorEdit4("Specular0", ref light.Specular0, ImGuiColorEditFlags.NoInputs); ImGui.SameLine();
+                    update |= ImGui.ColorEdit4("Specular1", ref light.Specular1, ImGuiColorEditFlags.NoInputs);
+                    update |= ImGui.ColorEdit4("Ambient", ref light.Ambient, ImGuiColorEditFlags.NoInputs);
+                }
+                if (update)
+                {
+                    GLContext.ActiveContext.UpdateViewport = true;
+                    render.UpdateAllUniforms();
+                }
+            };
+            return lightNode;
         }
 
         static bool EditColor(string label, ref OpenTK.Graphics.Color4 color)

@@ -188,25 +188,19 @@ namespace CtrLibrary.Bch
                 Renderer.GlobalHsLGCol = new Vector3(1, 1, 1);
                 Renderer.GlobalHsLSCol = new Vector3(1, 1, 1);
 
-                light.Direction = new OpenTK.Vector3(-0.681f, -0.096f, -3.139f);
+                light.Direction = new Vector3(-0.681f, -0.096f, -3.139f);
                 light.Position = light.Direction;
 
-                light.Diffuse = new OpenTK.Graphics.Color4(1, 1, 1, 1f);
-                light.Ambient = new OpenTK.Graphics.Color4(1, 1, 1, 1f);
+                light.Diffuse = new Vector4(1, 1, 1, 1f);
+                light.Ambient = new Vector4(1, 1, 1, 1f);
 
-                light.Specular0 = new OpenTK.Graphics.Color4(0.27f, 0.27f, 0.27f, 1f);
-                light.Specular1 = new OpenTK.Graphics.Color4(0.23f, 0.23f, 0.23f, 1f);
+                light.Specular0 = new Vector4(0.27f, 0.27f, 0.27f, 1f);
+                light.Specular1 = new Vector4(0.23f, 0.23f, 0.23f, 1f);
 
                 Render.Renderer.UpdateAllUniforms();
             }
 
-            // AddRender(new SceneLightingUI.LightPreview(light));
-            foreach (var lightNode in SceneLightingUI.Setup(Render, Render.Renderer.Lights))
-            {
-                Root.AddChild(lightNode);
-                //only load one scene light for global usage
-                break;
-            }
+            Root.AddChild(SceneLightingUI.Setup(Render));
 
             //Prepare tree nodes to visualize in the gui
             ModelFolder = new ModelFolder<H3DModel>(this, H3DData, H3DData.Models);
@@ -618,7 +612,9 @@ namespace CtrLibrary.Bch
                 {
                     //Check if the current node selected was an animation and apply playback
                     if (Tag is AnimationWrapper)
+                    {
                         ((AnimationWrapper)Tag).AnimationSet();
+                    }
                 };
             }
 
