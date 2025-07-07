@@ -88,8 +88,9 @@ namespace CtrLibrary.UI
                         bool selected = SceneLightConfig.Current == preset;
                         if (ImGui.Selectable(preset.Name, selected))
                         {
-                            SceneLightConfig.Current = preset;
-                            SceneLightConfig.Current.Save();
+                            SceneLightConfig.Current.Copy(preset);
+                            SceneConfig.Current.LightPreset = preset.Name;
+                            SceneConfig.Current.Save();
                         }
                         if (selected)
                             ImGui.SetItemDefaultFocus();
