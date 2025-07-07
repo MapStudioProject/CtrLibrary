@@ -91,6 +91,9 @@ namespace CtrLibrary.UI
                             SceneLightConfig.Current.Copy(preset);
                             SceneConfig.Current.LightPreset = preset.Name;
                             SceneConfig.Current.Save();
+
+                            GLContext.ActiveContext.UpdateViewport = true;
+                            render.UpdateAllUniforms();
                         }
                         if (selected)
                             ImGui.SetItemDefaultFocus();
