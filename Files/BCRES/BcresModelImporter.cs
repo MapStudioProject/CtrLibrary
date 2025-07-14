@@ -393,7 +393,7 @@ namespace CtrLibrary.Bcres
             CalculateBounding(ref gfxShape, iomesh);
 
             //Create a default normal set if one is not present
-            if (!vertexBuffer.Attributes.Any(x => x.AttrName == PICAAttributeName.Normal))
+            if (settings.ImportNormals && !vertexBuffer.Attributes.Any(x => x.AttrName == PICAAttributeName.Normal))
             {
                 //Constant normal if not present
                 float[] normal = new float[3] { 1, 0, 0 };

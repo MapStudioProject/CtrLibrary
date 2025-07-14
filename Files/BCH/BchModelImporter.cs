@@ -759,7 +759,7 @@ namespace CtrLibrary.Bch
                 Scale = settings.Position.Scale,
             });
             //Vertex normals
-            if (meshes.Any(x => x.HasNormals))
+            if (settings.ImportNormals && meshes.Any(x => x.HasNormals))
             {
                 attributes.Add(new PICAAttribute()
                 {
