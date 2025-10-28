@@ -1,25 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
-using System.Threading.Tasks;
-using Toolbox.Core;
-using Toolbox.Core.IO;
-using MapStudio.UI;
-using SPICA.Rendering;
-using SPICA.Formats.CtrH3D;
-using SPICA.Formats.CtrGfx;
-using UIFramework;
-using System.Numerics;
-using Toolbox.Core.ViewModels;
-using Newtonsoft.Json;
-using CtrLibrary.Rendering;
+﻿using CtrLibrary.Rendering;
 using CtrLibrary.UI;
-using SPICA.Formats.CtrGfx.Texture;
-using SPICA.Formats.CtrH3D.Animation;
-using SPICA.Formats.CtrGfx.Animation;
+using Discord;
 using GLFrameworkEngine;
+using MapStudio.UI;
+using Newtonsoft.Json;
 using SPICA.Formats.Common;
+using SPICA.Formats.CtrGfx;
+using SPICA.Formats.CtrGfx.Animation;
+using SPICA.Formats.CtrGfx.AnimGroup;
+using SPICA.Formats.CtrGfx.Camera;
+using SPICA.Formats.CtrGfx.Fog;
+using SPICA.Formats.CtrGfx.Light;
+using SPICA.Formats.CtrGfx.LUT;
+using SPICA.Formats.CtrGfx.Model;
+using SPICA.Formats.CtrGfx.Model.Material;
+using SPICA.Formats.CtrGfx.Scene;
+using SPICA.Formats.CtrGfx.Shader;
+using SPICA.Formats.CtrGfx.Texture;
+using SPICA.Formats.CtrH3D;
+using SPICA.Formats.CtrH3D.Animation;
+using SPICA.Formats.CtrH3D.Camera;
 using SPICA.Formats.CtrH3D.Fog;
 using SPICA.Formats.CtrH3D.Light;
 using SPICA.Formats.CtrH3D.LUT;
@@ -27,19 +27,20 @@ using SPICA.Formats.CtrH3D.Model;
 using SPICA.Formats.CtrH3D.Scene;
 using SPICA.Formats.CtrH3D.Shader;
 using SPICA.Formats.CtrH3D.Texture;
-using SPICA.Formats.CtrGfx.Model;
-using SPICA.Formats.CtrGfx.LUT;
-using SPICA.Formats.CtrGfx.Light;
-using SPICA.Formats.CtrGfx.Fog;
-using SPICA.Formats.CtrGfx.Scene;
-using SPICA.Formats.CtrGfx.Shader;
-using Discord;
 using SPICA.PICA.Shader;
-using static CtrLibrary.Bch.BCH;
+using SPICA.Rendering;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Numerics;
+using System.Threading.Tasks;
+using Toolbox.Core;
 using Toolbox.Core.Animations;
-using SPICA.Formats.CtrGfx.Camera;
-using SPICA.Formats.CtrH3D.Camera;
-using SPICA.Formats.CtrGfx.AnimGroup;
+using Toolbox.Core.IO;
+using Toolbox.Core.ViewModels;
+using UIFramework;
+using static CtrLibrary.Bch.BCH;
 using static System.Collections.Specialized.BitVector32;
 
 namespace CtrLibrary.Bcres
@@ -136,6 +137,19 @@ namespace CtrLibrary.Bcres
         private void Load(Gfx gfx)
         {
             BcresData = gfx;
+
+            if (gfx.Revision <= 83886080)
+            {
+                foreach (var model in gfx.Models)
+                {
+                    for (int i = 0; i < model.Materials.Count; i++)
+                    {
+                        var mat = GfxMaterial.CreateDefault();
+                        mat.Name = model.Materials[i].Name;
+                        model.Materials[i] = mat;
+                    }
+                }
+            }
 
             var h3d = BcresData.ToH3D();
 

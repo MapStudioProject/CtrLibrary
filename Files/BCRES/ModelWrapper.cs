@@ -1,38 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Linq;
-using System.Threading.Tasks;
-using Toolbox.Core.ViewModels;
-using SPICA.Formats.CtrGfx;
-using SPICA.Formats.CtrGfx.Model;
-using SPICA.Formats.CtrGfx.Model.Mesh;
-using SPICA.Formats.CtrGfx.Model.Material;
-using SPICA.Formats.CtrH3D;
-
-using ImGuiNET;
-using SPICA.Formats.CtrH3D.Model.Material;
-using OpenTK;
-using GLFrameworkEngine;
-using OpenTK.Graphics.OpenGL;
-using MapStudio.UI;
-using Newtonsoft.Json;
-using System.IO;
-using Toolbox.Core;
+﻿using CtrLibrary.Bch;
+using CtrLibrary.Files.BCH;
 using CtrLibrary.Rendering;
-using CtrLibrary.Bch;
-using SPICA.PICA.Converters;
-using SPICA.Formats.CtrGfx.AnimGroup;
-using Toolbox.Core.Animations;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
-using static SPICA.Rendering.Animation.SkeletalAnimation;
+using GLFrameworkEngine;
+using ImGuiNET;
 using IONET.Collada.Core.Controller;
 using IONET.Core.Skeleton;
-using static GLFrameworkEngine.SkeletonRenderer;
+using MapStudio.UI;
+using Newtonsoft.Json;
+using OpenTK;
+using OpenTK.Graphics.OpenGL;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 using SPICA.Formats.Common;
+using SPICA.Formats.CtrGfx;
+using SPICA.Formats.CtrGfx.AnimGroup;
+using SPICA.Formats.CtrGfx.Model;
+using SPICA.Formats.CtrGfx.Model.Material;
+using SPICA.Formats.CtrGfx.Model.Mesh;
+using SPICA.Formats.CtrH3D;
+using SPICA.Formats.CtrH3D.Model.Material;
+using SPICA.PICA.Converters;
+using SPICA.Rendering;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Numerics;
+using System.Threading.Tasks;
+using Toolbox.Core;
+using Toolbox.Core.Animations;
+using Toolbox.Core.ViewModels;
+using static GLFrameworkEngine.SkeletonRenderer;
+using static SPICA.Rendering.Animation.SkeletalAnimation;
 using static System.Collections.Specialized.BitVector32;
-using CtrLibrary.Files.BCH;
 
 namespace CtrLibrary.Bcres
 {
@@ -50,6 +50,7 @@ namespace CtrLibrary.Bcres
             BcresFile = bcresFile;
 
             ContextMenus.Add(new MenuItemModel("Import", Add));
+            ContextMenus.Add(new MenuItemModel("Export All", ExportAll));
 
             foreach (var model in bcresFile.Models)
                 AddChild(new CMDL(bcres, bcresFile, model));
@@ -66,6 +67,24 @@ namespace CtrLibrary.Bcres
             {
                 if (dlg.FilePath.EndsWith(".dae") || dlg.FilePath.EndsWith(".fbx"))
                     Import(dlg.FilePath);
+            }
+        }
+
+        private void ExportAll()
+        {
+            ImguiFolderDialog dlg = new ImguiFolderDialog();
+            if (dlg.ShowDialog())
+            {
+                foreach (var tex in BcresFile.Textures)
+                {
+                    //Save image as png
+                    var h3dTex = tex.ToH3D();
+                    var image = h3dTex.ToBitmap();
+                    image.SaveAsPng(Path.Combine(dlg.SelectedPath, $"{tex.Name}.png"));
+                    image.Dispose();
+                }
+                foreach (CMDL model in this.Children)
+                    BchModelExporter.Export(model.Model.ToH3D(), Path.Combine(dlg.SelectedPath, model.Header + ".dae"));
             }
         }
 
