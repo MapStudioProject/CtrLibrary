@@ -137,20 +137,6 @@ namespace CtrLibrary.Bcres
         private void Load(Gfx gfx)
         {
             BcresData = gfx;
-
-            if (gfx.Revision <= 83886080)
-            {
-                foreach (var model in gfx.Models)
-                {
-                    for (int i = 0; i < model.Materials.Count; i++)
-                    {
-                        var mat = GfxMaterial.CreateDefault();
-                        mat.Name = model.Materials[i].Name;
-                        model.Materials[i] = mat;
-                    }
-                }
-            }
-
             var h3d = BcresData.ToH3D();
 
             Root.TagUI.Tag = h3d;
