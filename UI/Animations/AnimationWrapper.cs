@@ -461,7 +461,7 @@ namespace CtrLibrary
                     foreach (var model in render.Models)
                     {
                         model.SkeletalAnim.Frame = this.Frame;
-                        model.UpdateAnimationTransforms();
+                        model.UpdateAnimationSkeletonTransforms();
                     }
                 }
             }
