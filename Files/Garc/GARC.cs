@@ -98,28 +98,58 @@ namespace FirstPlugin
             files.Clear();
 
             FileInfo.Stream = stream;
-            FileInfo.KeepOpen = true;   
+            FileInfo.KeepOpen = true;
             using (FileReader reader = new FileReader(stream, true))
             {
                 //header
+                ByteOrder byteOrder = DetectByteOrder(reader);
+                reader.ByteOrder = byteOrder;
+                reader.BaseStream.Seek(0, SeekOrigin.Begin);
                 header = reader.ReadStruct<Header>();
                 //FATO
+                reader.BaseStream.Position = header.headerSize;
                 fatoHeader = reader.ReadStruct<FatoHeader>();
                 reader.BaseStream.Position = reader.BaseStream.Position + 3 & ~3;
                 fatoOffsets = reader.ReadUInt32s(fatoHeader.entryCount).ToList();
 
                 //FATB
                 fatbHeader = reader.ReadStruct<FatbHeader>();
-                fatbEntries = reader.ReadMultipleStructs<FatbEntry>((int)fatbHeader.entryCount);
+                // Some GARC variants report a larger FATB entryCount than FATO; in practice
+                // FATO's entryCount is the usable file count.
+                uint usableCount = fatbHeader.entryCount;
+                if (fatoHeader.entryCount > 0 && fatbHeader.entryCount > fatoHeader.entryCount)
+                    usableCount = fatoHeader.entryCount;
+                int entryCount = ValidateEntryCount(reader, usableCount);
+                fatbEntries = reader.ReadMultipleStructs<FatbEntry>(entryCount);
 
                 //FIMB
                 fimbHeader = reader.ReadStruct<FimbHeader>();
 
-                for (int i = 0; i < fatbHeader.entryCount; i++)
+                for (int i = 0; i < entryCount; i++)
                 {
-                    reader.BaseStream.Position = fatbEntries[i].offset + header.dataOffset;
-                    var mag = reader.ReadByte();
-                    var extension = (mag == 0x11) ? ".lz11" : "";
+                    var size = (fatbEntries[i].size == 0) ? fatbEntries[i].endOffset - fatbEntries[i].offset : fatbEntries[i].size;
+                    long entryPos = (long)fatbEntries[i].offset + header.dataOffset;
+                    if (size == 0)
+                        continue;
+                    if (entryPos < 0 || entryPos >= reader.BaseStream.Length)
+                        continue;
+                    if (entryPos + size > reader.BaseStream.Length)
+                        continue;
+
+                    reader.BaseStream.Position = entryPos;
+                    byte[] headerBytes = reader.ReadBytes((int)Math.Min(8, size));
+                    if (headerBytes.Length == 0)
+                        continue;
+
+                    var mag = headerBytes[0];
+                    var extension = "";
+                    bool isLz11 = false;
+                    if (mag == 0x11)
+                    {
+                        reader.BaseStream.Position = entryPos;
+                        isLz11 = IsLikelyLz11(reader, fatbEntries[i]);
+                        extension = isLz11 ? ".lz11" : "";
+                    }
                     if (extension == ".lz11")
                     {
                         reader.Seek(4);
@@ -128,24 +158,35 @@ namespace FirstPlugin
                     }
                     if (extension == "")
                     {
-                        reader.BaseStream.Position--;
+                        reader.BaseStream.Position = entryPos;
                         var magS = reader.ReadString(2);
                         extension = _knownFiles.ContainsKey(magS) ? _knownFiles[magS] : ".bin";
 
                         if (extension == ".bin")
                         {
-                            reader.BaseStream.Position -= 2;
+                            reader.BaseStream.Position = entryPos;
                             magS = reader.ReadString(4);
                             extension = _knownFiles.ContainsKey(magS) ? _knownFiles[magS] : ".bin";
                         }
                     }
 
-                    var size = (fatbEntries[i].size == 0) ? fatbEntries[i].endOffset - fatbEntries[i].offset : fatbEntries[i].size;
+                    string twoCcMagic = null;
+                    if (headerBytes.Length >= 2)
+                    {
+                        byte a = headerBytes[0];
+                        byte b = headerBytes[1];
+                        if (a >= 0x41 && a <= 0x5A && b >= 0x41 && b <= 0x5A)
+                            twoCcMagic = $"{(char)a}{(char)b}";
+                    }
+
+                    string name = $"{i:00000000}" + extension;
+                    if (extension == ".bin" && !string.IsNullOrEmpty(twoCcMagic))
+                        name += "." + twoCcMagic;
                     files.Add(new GARC4FileInfo(this)
                     {
-                        IsLZ11 = (mag == 0x11),
-                        FileName = $"{i:00000000}" + extension,
-                        FileData = new SubStream(reader.BaseStream, fatbEntries[i].offset + header.dataOffset, size)
+                        IsLZ11 = isLz11,
+                        FileName = name,
+                        FileData = new SubStream(reader.BaseStream, entryPos, size)
                     });
                 }
             }
@@ -234,20 +275,29 @@ namespace FirstPlugin
                    set
                    {
                     base.FileData = value;
+                    decompressedCache = null;
                 }
             }
 
+            private byte[] decompressedCache;
+
             private Stream DecompressBlock()
             {
+                if (decompressedCache != null)
+                    return new MemoryStream(decompressedCache, false);
+
                 byte[] data = base.FileData.ToArray();
 
                 if (IsLZ11)
                 {
                     LZSS_N lz11 = new LZSS_N();
-                    return lz11.Decompress(new MemoryStream(data));
+                    using var decompressed = lz11.Decompress(new MemoryStream(data));
+                    decompressedCache = decompressed.ToArray();
+                    return new MemoryStream(decompressedCache, false);
                 }
 
-                return new MemoryStream(data);
+                decompressedCache = data;
+                return new MemoryStream(decompressedCache, false);
             }
 
             public override Stream CompressData(Stream decompressed)
@@ -315,5 +365,86 @@ namespace FirstPlugin
         }
 
         #endregion
+
+        private static bool IsLikelyLz11(FileReader reader, FatbEntry entry)
+        {
+            long start = reader.BaseStream.Position;
+            try
+            {
+                uint size = entry.size == 0 ? entry.endOffset - entry.offset : entry.size;
+                if (size < 8)
+                    return false;
+                if (reader.ReadByte() != 0x11)
+                    return false;
+
+                int decodedLen = reader.ReadByte() | (reader.ReadByte() << 8) | (reader.ReadByte() << 16);
+                if (decodedLen <= 0)
+                    return false;
+                if (decodedLen > 0x2000000) // sanity cap
+                    return false;
+
+                long remaining = (long)size - 4;
+                if (remaining <= 0)
+                    return false;
+                if (decodedLen < remaining / 2)
+                    return false;
+
+                return true;
+            }
+            finally
+            {
+                reader.BaseStream.Position = start;
+            }
+        }
+
+        private static ByteOrder DetectByteOrder(FileReader reader)
+        {
+            long start = reader.BaseStream.Position;
+            try
+            {
+                reader.BaseStream.Seek(0, SeekOrigin.Begin);
+                byte[] headerBytes = reader.ReadBytes(0x1C);
+                if (headerBytes.Length < 0x0A)
+                    throw new InvalidDataException("GARC header too small.");
+
+                ushort leOrder = (ushort)(headerBytes[8] | (headerBytes[9] << 8));
+                ushort beOrder = (ushort)((headerBytes[8] << 8) | headerBytes[9]);
+
+                if (leOrder == 0xFEFF || leOrder == 0xFFFE)
+                    return leOrder == 0xFEFF ? ByteOrder.LittleEndian : ByteOrder.BigEndian;
+                if (beOrder == 0xFEFF || beOrder == 0xFFFE)
+                    return beOrder == 0xFEFF ? ByteOrder.BigEndian : ByteOrder.LittleEndian;
+
+                uint leHeaderSize = BitConverter.ToUInt32(headerBytes, 4);
+                uint beHeaderSize = (uint)((headerBytes[4] << 24) | (headerBytes[5] << 16) | (headerBytes[6] << 8) | headerBytes[7]);
+
+                if (leHeaderSize == 0x1C)
+                    return ByteOrder.LittleEndian;
+                if (beHeaderSize == 0x1C)
+                    return ByteOrder.BigEndian;
+
+                throw new InvalidDataException("Unable to detect GARC byte order.");
+            }
+            finally
+            {
+                reader.BaseStream.Seek(start, SeekOrigin.Begin);
+            }
+        }
+
+        private static int ValidateEntryCount(FileReader reader, uint entryCount)
+        {
+            if (entryCount > int.MaxValue)
+                throw new InvalidDataException($"GARC entry count too large: {entryCount}.");
+
+            int count = (int)entryCount;
+            int entrySize = Marshal.SizeOf<FatbEntry>();
+            long remaining = reader.BaseStream.Length - reader.BaseStream.Position;
+            long maxCount = remaining / entrySize;
+
+            if (count < 0 || count > maxCount)
+                throw new InvalidDataException($"GARC entry count out of range: {count} (max {maxCount}).");
+
+            return count;
+        }
     }
 }
