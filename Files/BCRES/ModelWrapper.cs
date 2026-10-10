@@ -3,6 +3,7 @@ using CtrLibrary.Files.BCH;
 using CtrLibrary.Rendering;
 using GLFrameworkEngine;
 using ImGuiNET;
+using IONET.Assimp;
 using IONET.Collada.Core.Controller;
 using IONET.Core.Skeleton;
 using MapStudio.UI;
@@ -62,12 +63,12 @@ namespace CtrLibrary.Bcres
             dlg.SaveDialog = false;
             dlg.FileName = $"{Header}";
             dlg.AddFilter(".dae", "dae");
-            dlg.AddFilter(".fbx", "fbx");
+            dlg.AddFilter(".gltf", "gltf");
+            dlg.AddFilter(".glb", "glb");
+            if (AssimpHelper.IsRuntimePresent())
+                dlg.AddFilter(".fbx", "fbx");
             if (dlg.ShowDialog())
-            {
-                if (dlg.FilePath.EndsWith(".dae") || dlg.FilePath.EndsWith(".fbx"))
-                    Import(dlg.FilePath);
-            }
+                Import(dlg.FilePath);
         }
 
         private void ExportAll()
@@ -342,7 +343,11 @@ namespace CtrLibrary.Bcres
             dlg.AddFilter(".gltf", "gltf");
             dlg.AddFilter(".glb", "glb");
             dlg.AddFilter(".dae", "dae");
+            if (AssimpHelper.IsRuntimePresent())
+                dlg.AddFilter(".fbx", "fbx");
+
             dlg.AddFilter(".json", "json");
+
             if (dlg.ShowDialog())
             {
                 if (dlg.FilePath.EndsWith(".dae") ||
@@ -376,7 +381,8 @@ namespace CtrLibrary.Bcres
             dlg.AddFilter(".dae", "dae");
             dlg.AddFilter(".glb", "glb");
             dlg.AddFilter(".gltf", "gltf");
-           // dlg.AddFilter(".fbx", "fbx"); // FBX barely works so disable for now
+            if (AssimpHelper.IsRuntimePresent())
+                dlg.AddFilter(".fbx", "fbx");
             dlg.AddFilter(".smd", "smd");
             if (dlg.ShowDialog())
             {

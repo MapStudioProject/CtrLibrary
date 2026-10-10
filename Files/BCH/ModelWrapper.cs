@@ -34,6 +34,7 @@ using SixLabors.ImageSharp.Processing;
 using Toolbox.Core.IO;
 using Toolbox.Core.Imaging;
 using CtrLibrary.Files.BCH;
+using IONET.Assimp;
 
 namespace CtrLibrary.Bch
 {
@@ -98,7 +99,8 @@ namespace CtrLibrary.Bch
             ImguiFileDialog dlg = new ImguiFileDialog();
             dlg.SaveDialog = false;
             dlg.AddFilter(".dae", "dae");
-           // dlg.AddFilter(".fbx", "fbx");
+            if (AssimpHelper.IsRuntimePresent())
+                dlg.AddFilter(".fbx", "fbx");
             dlg.AddFilter(".smd", "smd");
             dlg.AddFilter(".bch", "bch");
             dlg.AddFilter(".gltf", "gltf");
@@ -180,9 +182,15 @@ namespace CtrLibrary.Bch
 
         public Type GetTypeUI() => typeof(BchModelUI);
 
-        public override string[] ExportFilters => new string[] { ".dae", ".gltf", ".glb", ".fbx", ".smd", ".bch" };
+        public override string[] ExportFilters =>
+            AssimpHelper.IsRuntimePresent()
+            ? new string[] { ".dae", ".gltf", ".glb", ".fbx", ".smd", ".bch" }
+            : new string[] { ".dae", ".gltf", ".glb", ".smd", ".bch" };
 
-        public override string[] ReplaceFilters => new string[] { ".dae", ".gltf", ".glb", ".fbx", ".smd", ".bch" };
+        public override string[] ReplaceFilters =>
+            AssimpHelper.IsRuntimePresent()
+            ? new string[] { ".dae", ".gltf", ".glb", ".fbx", ".smd", ".bch" }
+            : new string[] { ".dae", ".gltf", ".glb", ".smd", ".bch" };
 
         public override string DefaultExtension => ".gltf";
 
